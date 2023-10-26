@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -48,11 +49,64 @@ void AWeapon::BeginPlay()
 	}
 }
 
+
 // Called every frame
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWeapon, weaponState);
+}
+
+void AWeapon::SetWeaponState(EWeaponState state)
+{
+	weaponState = state;
+	switch (weaponState)
+	{
+	case EWeaponState::Initial:
+
+		break;
+
+	case EWeaponState::Equipped:
+		ShowPickupWidget(false);
+		areaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+
+	case EWeaponState::Dropped:
+
+		break;
+
+	default:
+		break;
+	}
+}
+
+void AWeapon::OnRep_WeaponState()
+{
+	switch (weaponState)
+	{
+	case EWeaponState::Initial:
+
+		break;
+
+	case EWeaponState::Equipped:
+		ShowPickupWidget(false);
+		break;
+
+	case EWeaponState::Dropped:
+
+		break;
+
+	default:
+
+		break;
+	}
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)
@@ -80,4 +134,6 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		character->SetOverlappingWeapon(nullptr);
 	}
 }
+
+
 

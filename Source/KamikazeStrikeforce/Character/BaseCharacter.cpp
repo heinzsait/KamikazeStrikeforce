@@ -13,6 +13,7 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
+#include "KamikazeStrikeforce/Components/CombatComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -53,8 +54,8 @@ ABaseCharacter::ABaseCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
+	combat->SetIsReplicated(true);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -69,6 +70,15 @@ void ABaseCharacter::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+void ABaseCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (combat)
+	{
+		combat->character = this;
 	}
 }
 
@@ -89,6 +99,10 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
+
+		// Jumping
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABaseCharacter::EquipPressed);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Completed, this, &ABaseCharacter::EquipReleased);
 	}
 	else
 	{
@@ -132,6 +146,31 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void ABaseCharacter::EquipPressed()
+{
+	//if (GEngine)
+	//	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("Equip pressed...")));
+
+	if (combat && overlappingWeapon)
+	{
+		if (HasAuthority())
+			combat->EquipWeapon(overlappingWeapon);
+		else
+			ServerEquipPressed();
+	}
+}
+
+void ABaseCharacter::ServerEquipPressed_Implementation()
+{
+	if (combat && overlappingWeapon)
+	{
+		combat->EquipWeapon(overlappingWeapon);
+	}
+}
+
+void ABaseCharacter::EquipReleased()
+{
+}
 
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -143,6 +182,10 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 {
+
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapping...")));
+
 	if (overlappingWeapon)
 	{
 		overlappingWeapon->ShowPickupWidget(false);
@@ -159,6 +202,9 @@ void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 
 void ABaseCharacter::OnRep_OverlappingWeapon(AWeapon* lastWeapon)
 {
+
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapped in server")));
 	if (overlappingWeapon)
 	{
 		overlappingWeapon->ShowPickupWidget(true);

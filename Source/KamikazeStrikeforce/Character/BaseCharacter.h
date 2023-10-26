@@ -44,6 +44,10 @@ class ABaseCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	/** Equip Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EquipAction;
+
 public:
 	ABaseCharacter();
 
@@ -56,6 +60,12 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
+	void EquipPressed();
+	void EquipReleased();
+
+	UFUNCTION(Server, Reliable)
+	void ServerEquipPressed();
+
 
 protected:
 	// APawn interface
@@ -63,6 +73,8 @@ protected:
 
 	// To add mapping context
 	virtual void BeginPlay();
+
+	virtual void PostInitializeComponents() override;
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -79,6 +91,9 @@ private:
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* lastWeapon);
+
+	UPROPERTY(EditAnywhere)
+	class UCombatComponent* combat;
 
 public:
 	
