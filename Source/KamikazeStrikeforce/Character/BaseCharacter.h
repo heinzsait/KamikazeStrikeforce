@@ -12,6 +12,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UCombatComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -27,6 +28,9 @@ class ABaseCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	
+	UCombatComponent* combat;
 
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -48,6 +52,14 @@ class ABaseCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* EquipAction;
 
+	/** Crouch Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* CrouchAction;
+
+	/** Aim Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AimAction;
+
 public:
 	ABaseCharacter();
 
@@ -61,11 +73,14 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	void EquipPressed();
-	void EquipReleased();
+	void CrouchPressed();
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipPressed();
 
+
+	void AimPressed();
+	void AimReleased();
 
 protected:
 	// APawn interface
@@ -82,8 +97,6 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-
-
 private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
@@ -92,14 +105,13 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* lastWeapon);
 
-	UPROPERTY(EditAnywhere)
-	class UCombatComponent* combat;
-
 public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetOverlappingWeapon(AWeapon* weapon);
 
+	bool IsEquipped();
+	bool IsAiming();
 };
 

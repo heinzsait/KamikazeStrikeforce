@@ -42,6 +42,7 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -56,6 +57,8 @@ ABaseCharacter::ABaseCharacter()
 
 	combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	combat->SetIsReplicated(true);
+
+
 }
 
 void ABaseCharacter::BeginPlay()
@@ -78,12 +81,28 @@ void ABaseCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	if (combat)
 	{
-		combat->character = this;
+		combat->character = this; 
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Input
+
+void ABaseCharacter::AimPressed()
+{
+	if (combat)
+	{
+		combat->SetAiming(true);
+	}
+}
+
+void ABaseCharacter::AimReleased()
+{
+	if (combat)
+	{
+		combat->SetAiming(false);
+	}
+}
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -100,9 +119,12 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
 
-		// Jumping
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABaseCharacter::EquipPressed);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Completed, this, &ABaseCharacter::EquipReleased);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABaseCharacter::CrouchPressed);
+
+
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ABaseCharacter::AimPressed);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ABaseCharacter::AimReleased);
 	}
 	else
 	{
@@ -148,13 +170,12 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 
 void ABaseCharacter::EquipPressed()
 {
-	//if (GEngine)
-	//	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("Equip pressed...")));
-
 	if (combat && overlappingWeapon)
 	{
 		if (HasAuthority())
+		{
 			combat->EquipWeapon(overlappingWeapon);
+		}
 		else
 			ServerEquipPressed();
 	}
@@ -168,10 +189,14 @@ void ABaseCharacter::ServerEquipPressed_Implementation()
 	}
 }
 
-void ABaseCharacter::EquipReleased()
-{
-}
 
+void ABaseCharacter::CrouchPressed()
+{
+	if (!bIsCrouched)
+		Crouch();
+	else
+		UnCrouch();
+}
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -183,8 +208,8 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 {
 
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapping...")));
+	//if (GEngine)
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapping...")));
 
 	if (overlappingWeapon)
 	{
@@ -200,11 +225,21 @@ void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 	}
 }
 
+bool ABaseCharacter::IsEquipped()
+{
+	return (combat && combat->equippedWeapon);
+}
+
+bool ABaseCharacter::IsAiming()
+{
+	return (combat && combat->isAiming);
+}
+
 void ABaseCharacter::OnRep_OverlappingWeapon(AWeapon* lastWeapon)
 {
 
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapped in server")));
+	//if (GEngine)
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("overlapped in server")));
 	if (overlappingWeapon)
 	{
 		overlappingWeapon->ShowPickupWidget(true);

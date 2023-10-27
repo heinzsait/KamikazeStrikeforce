@@ -16,17 +16,32 @@ class KAMIKAZESTRIKEFORCE_API UCombatComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UCombatComponent();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	friend class ABaseCharacter;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(AWeapon* weapon);
+
+	UPROPERTY(Replicated)
+	bool isAiming;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void SetAiming(bool _isAiming);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetAiming(bool _isAiming);
+
 private:	
-	AWeapon* equippedWeapon;
+
 	class ABaseCharacter* character;
+
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
+	AWeapon* equippedWeapon;
+
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
 		
 };

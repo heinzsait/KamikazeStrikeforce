@@ -4,7 +4,9 @@
 #include "CombatComponent.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -35,8 +37,16 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	// ...
 }
 
-void UCombatComponent::EquipWeapon(AWeapon* weapon)
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UCombatComponent, equippedWeapon);
+	DOREPLIFETIME(UCombatComponent, isAiming);
+}
+
+void UCombatComponent::EquipWeapon(AWeapon* weapon)
+{	
 	if (character && weapon)
 	{
 		const USkeletalMeshSocket* handSocket = character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
@@ -46,7 +56,30 @@ void UCombatComponent::EquipWeapon(AWeapon* weapon)
 			equippedWeapon->SetWeaponState(EWeaponState::Equipped);
 			equippedWeapon->SetOwner(character);
 			handSocket->AttachActor(equippedWeapon, character->GetMesh());
+
+			character->GetCharacterMovement()->bOrientRotationToMovement = false;
+			character->bUseControllerRotationYaw = true;
 		}
 	}
 }
 
+
+void UCombatComponent::SetAiming(bool _isAiming)
+{
+	isAiming = _isAiming;
+	ServerSetAiming(_isAiming);
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (equippedWeapon && character)
+	{
+		character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		character->bUseControllerRotationYaw = true;
+	}
+}
+
+void UCombatComponent::ServerSetAiming_Implementation(bool _isAiming)
+{
+	isAiming = _isAiming;
+}
