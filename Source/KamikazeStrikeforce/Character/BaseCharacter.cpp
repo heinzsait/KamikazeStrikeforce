@@ -14,6 +14,7 @@
 #include "Net/UnrealNetwork.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
 #include "KamikazeStrikeforce/Components/CombatComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -58,8 +59,15 @@ ABaseCharacter::ABaseCharacter()
 	combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	combat->SetIsReplicated(true);
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
+	turnInPlace = ETurnInPlace::None;
+
+	NetUpdateFrequency = 66.0f;
+	MinNetUpdateFrequency = 33.0f;
 }
+
 
 void ABaseCharacter::BeginPlay()
 {
@@ -85,6 +93,13 @@ void ABaseCharacter::PostInitializeComponents()
 	}
 }
 
+
+void ABaseCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	AimOffset(DeltaTime);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -102,6 +117,71 @@ void ABaseCharacter::AimReleased()
 	{
 		combat->SetAiming(false);
 	}
+}
+
+void ABaseCharacter::AimOffset(float deltaTime)
+{
+	if (combat && combat->equippedWeapon)
+	{
+		float speed = UKismetMathLibrary::VSizeXY(GetCharacterMovement()->Velocity);
+		bool isInAir = (GetCharacterMovement()->IsFalling() || GetCharacterMovement()->IsFlying());
+
+		if (speed == 0.0f && !isInAir)
+		{
+			FRotator currentAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+			FRotator deltaAimRot = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRot, startAimRot);
+			AO_Yaw = deltaAimRot.Yaw;
+			
+			bUseControllerRotationYaw = true;
+			UpdateTurnInPlace(deltaTime);
+		}
+		if (speed > 0.0f || isInAir)
+		{
+			startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+			AO_Yaw = 0.0f;
+			bUseControllerRotationYaw = true;
+			turnInPlace = ETurnInPlace::None;
+		}
+
+		AO_Pitch = GetBaseAimRotation().Pitch;
+		if (AO_Pitch > 90.0f && !IsLocallyControlled())
+		{
+			AO_Pitch = FMath::GetMappedRangeValueClamped(FVector2D(270.0f, 360.0f), FVector2D(-90.0f, 0.0f), AO_Pitch);
+		}
+
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, deltaTime, FColor::Cyan, FString::Printf(TEXT("AO Yaw = %f"), AO_Yaw));
+	}
+}
+
+void ABaseCharacter::UpdateTurnInPlace(float deltaTime)
+{
+	if (turnInPlace == ETurnInPlace::None)
+	{
+		interpAO_Yaw = AO_Yaw;
+	}
+
+	if (AO_Yaw > 90.0f)
+	{
+		turnInPlace = ETurnInPlace::Right;
+	}
+	else if (AO_Yaw < -90.0f)
+	{
+		turnInPlace = ETurnInPlace::Left;
+	}
+
+	if (turnInPlace != ETurnInPlace::None)
+	{
+		interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 5.0f);
+		AO_Yaw = interpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.0f)
+		{
+			turnInPlace = ETurnInPlace::None;
+			startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+			//AO_Yaw = 0.0f;
+		}
+	}
+	
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -225,16 +305,6 @@ void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 	}
 }
 
-bool ABaseCharacter::IsEquipped()
-{
-	return (combat && combat->equippedWeapon);
-}
-
-bool ABaseCharacter::IsAiming()
-{
-	return (combat && combat->isAiming);
-}
-
 void ABaseCharacter::OnRep_OverlappingWeapon(AWeapon* lastWeapon)
 {
 
@@ -249,3 +319,22 @@ void ABaseCharacter::OnRep_OverlappingWeapon(AWeapon* lastWeapon)
 		lastWeapon->ShowPickupWidget(false);
 	}
 }
+
+bool ABaseCharacter::IsEquipped()
+{
+	return (combat && combat->equippedWeapon);
+}
+
+bool ABaseCharacter::IsAiming()
+{
+	return (combat && combat->isAiming);
+}
+
+AWeapon* ABaseCharacter::GetEquippedWeapon()
+{
+	if (combat)
+		return combat->equippedWeapon;
+	else
+		return nullptr;
+}
+

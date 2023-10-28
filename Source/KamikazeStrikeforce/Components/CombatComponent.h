@@ -43,5 +43,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	float baseWalkSpeed;
+	float aimWalkSpeed;
 		
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "BaseCharacter.generated.h"
 
 class USpringArmComponent;
@@ -62,7 +63,7 @@ class ABaseCharacter : public ACharacter
 
 public:
 	ABaseCharacter();
-
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 
@@ -82,6 +83,10 @@ protected:
 	void AimPressed();
 	void AimReleased();
 
+	void AimOffset(float deltaTime);
+
+	void UpdateTurnInPlace(float deltaTime);
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -97,6 +102,12 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
+
+	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
+
+	FORCEINLINE ETurnInPlace GetTurnInPlace() { return turnInPlace; }
+
 private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
@@ -105,6 +116,13 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* lastWeapon);
 
+	float AO_Yaw;
+	float AO_Pitch;
+	float interpAO_Yaw;
+	FRotator startAimRot;
+
+	ETurnInPlace turnInPlace;
+
 public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -112,6 +130,9 @@ public:
 	void SetOverlappingWeapon(AWeapon* weapon);
 
 	bool IsEquipped();
+
 	bool IsAiming();
+
+	AWeapon* GetEquippedWeapon();
 };
 

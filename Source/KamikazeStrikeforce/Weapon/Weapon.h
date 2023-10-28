@@ -4,17 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "Weapon.generated.h"
-
-UENUM(BlueprintType)
-enum class EWeaponState : uint8
-{
-	Initial UMETA(DisplayName = "Initial State"),
-	Equipped UMETA(DisplayName = "Equipped"),
-	Dropped UMETA(DisplayName = "Dropped"),
-
-	LENGTH UMETA(DisplayName = "Length")
-};
 
 UCLASS()
 class KAMIKAZESTRIKEFORCE_API AWeapon : public AActor
@@ -36,6 +27,8 @@ public:
 	void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void SetWeaponState(EWeaponState state);
+
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return weaponMesh; }
 
 protected:
 	// Called when the game starts or when spawned

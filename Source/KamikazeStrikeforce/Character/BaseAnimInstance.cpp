@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
+#include "KamikazeStrikeforce/Weapon/Weapon.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UBaseAnimInstance::NativeInitializeAnimation()
@@ -34,6 +35,7 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		isAccelerating = characterMovement->GetCurrentAcceleration().Size() > 0.f ? true : false;
 
 		isWeaponEquiped = character->IsEquipped();
+		equippedWeapon = character->GetEquippedWeapon();
 
 		isCrouched = character->bIsCrouched;
 
@@ -52,5 +54,21 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		const float Target = Delta.Yaw / DeltaSeconds;
 		const float Interp = FMath::FInterpTo(lean, Target, DeltaSeconds, 6.0f);
 		lean = FMath::Clamp(Interp, -90.f, 90.f);
+
+		AO_Yaw = character->GetAO_Yaw();
+		AO_Pitch = character->GetAO_Pitch();
+
+
+		if (isWeaponEquiped && equippedWeapon && equippedWeapon->GetWeaponMesh() && character->GetMesh())
+		{
+			leftHandTransform = equippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), RTS_World);
+			FVector outLocation;
+			FRotator outRotation;
+			character->GetMesh()->TransformToBoneSpace(FName("hand_r"), leftHandTransform.GetLocation(), FRotator::ZeroRotator, outLocation, outRotation);
+			leftHandTransform.SetLocation(outLocation);
+			leftHandTransform.SetRotation(FQuat(outRotation));
+		}
+
+		turnInPlace = character->GetTurnInPlace();
 	}
 }
