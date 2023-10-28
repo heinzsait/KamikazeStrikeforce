@@ -2,6 +2,7 @@
 
 
 #include "BaseCharacter.h"
+#include "BaseAnimInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -82,6 +83,8 @@ void ABaseCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	animInstance = Cast<UBaseAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
 void ABaseCharacter::PostInitializeComponents()
@@ -116,6 +119,22 @@ void ABaseCharacter::AimReleased()
 	if (combat)
 	{
 		combat->SetAiming(false);
+	}
+}
+
+void ABaseCharacter::FirePressed()
+{
+	if (combat)
+	{
+		combat->FirePressed(true);
+	}
+}
+
+void ABaseCharacter::FireReleased()
+{
+	if (combat)
+	{
+		combat->FirePressed(false);
 	}
 }
 
@@ -205,6 +224,12 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ABaseCharacter::AimPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ABaseCharacter::AimReleased);
+
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ABaseCharacter::AimPressed);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ABaseCharacter::AimReleased);
+
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ABaseCharacter::FirePressed);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ABaseCharacter::FireReleased);
 	}
 	else
 	{
@@ -336,5 +361,15 @@ AWeapon* ABaseCharacter::GetEquippedWeapon()
 		return combat->equippedWeapon;
 	else
 		return nullptr;
+}
+
+void ABaseCharacter::PlayFireMontage(bool isAiming)
+{
+	if (animInstance && fireMontage)
+	{
+		animInstance->Montage_Play(fireMontage);
+		FName section = isAiming ? FName("FireAim") : FName("FireHip");
+		animInstance->Montage_JumpToSection(section);
+	}
 }
 

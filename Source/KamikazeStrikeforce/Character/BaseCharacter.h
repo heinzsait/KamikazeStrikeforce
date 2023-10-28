@@ -61,6 +61,10 @@ class ABaseCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AimAction;
 
+	/** Fire Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FireAction;
+
 public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;
@@ -82,6 +86,9 @@ protected:
 
 	void AimPressed();
 	void AimReleased();
+
+	void FirePressed();
+	void FireReleased();
 
 	void AimOffset(float deltaTime);
 
@@ -123,6 +130,11 @@ private:
 
 	ETurnInPlace turnInPlace;
 
+	class UBaseAnimInstance* animInstance;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* fireMontage;
+
 public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -134,5 +146,7 @@ public:
 	bool IsAiming();
 
 	AWeapon* GetEquippedWeapon();
+
+	void PlayFireMontage(bool isAiming);
 };
 

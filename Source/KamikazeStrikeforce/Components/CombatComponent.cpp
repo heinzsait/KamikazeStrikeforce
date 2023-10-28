@@ -7,18 +7,27 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	baseWalkSpeed = 600;
 	aimWalkSpeed = 400;
 }
 
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UCombatComponent, equippedWeapon);
+	DOREPLIFETIME(UCombatComponent, isAiming);
+}
 
 // Called when the game starts
 void UCombatComponent::BeginPlay()
@@ -38,15 +47,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
-}
-
-void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UCombatComponent, equippedWeapon);
-	DOREPLIFETIME(UCombatComponent, isAiming);
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* weapon)
@@ -67,14 +67,12 @@ void UCombatComponent::EquipWeapon(AWeapon* weapon)
 	}
 }
 
-
-void UCombatComponent::SetAiming(bool _isAiming)
+void UCombatComponent::OnRep_EquippedWeapon()
 {
-	isAiming = _isAiming;
-	ServerSetAiming(_isAiming);
-	if (character)
+	if (equippedWeapon && character)
 	{
-		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
+		character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		character->bUseControllerRotationYaw = true;
 	}
 }
 
@@ -87,11 +85,63 @@ void UCombatComponent::ServerSetAiming_Implementation(bool _isAiming)
 	}
 }
 
-void UCombatComponent::OnRep_EquippedWeapon()
+void UCombatComponent::SetAiming(bool _isAiming)
 {
-	if (equippedWeapon && character)
+	isAiming = _isAiming;
+	ServerSetAiming(_isAiming);
+	if (character)
 	{
-		character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		character->bUseControllerRotationYaw = true;
+		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
 	}
 }
+
+void UCombatComponent::FirePressed(bool isPressed)
+{
+	isFirePressed = isPressed;
+	if (isFirePressed)
+	{
+		FHitResult hitResult;
+		TraceCrosshair(hitResult);
+		ServerFire(hitResult.ImpactPoint);
+	}
+}
+
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize hitTarget)
+{
+	MultiCastFire(hitTarget);
+}
+
+void UCombatComponent::MultiCastFire_Implementation(const FVector_NetQuantize hitTarget)
+{
+	if (character && equippedWeapon)
+	{
+		character->PlayFireMontage(isAiming);
+		equippedWeapon->Fire(hitTarget);
+	}
+}
+
+
+void UCombatComponent::TraceCrosshair(FHitResult& result)
+{
+	FVector2D viewPortSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(viewPortSize);
+	}
+
+	FVector2D crosshairLocation(viewPortSize.X / 2, viewPortSize.Y / 2);
+	FVector crosshairWorldLocation;
+	FVector crosshairWorldDirection;
+	bool success = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), crosshairLocation, crosshairWorldLocation, crosshairWorldDirection);
+	if (success)
+	{
+		FVector start = crosshairWorldLocation ;
+		FVector end = start + crosshairWorldDirection * 100000;
+		GetWorld()->LineTraceSingleByChannel( result, start, end, ECC_Visibility);
+		if (!result.bBlockingHit)
+		{
+			result.ImpactPoint = end;
+		}
+	}
+}
+

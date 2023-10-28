@@ -34,6 +34,16 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool _isAiming);
 
+	void FirePressed(bool isPressed);
+
+	UFUNCTION(Server, Reliable)
+	void ServerFire(const FVector_NetQuantize hitTarget);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastFire(const FVector_NetQuantize hitTarget);
+
+	void TraceCrosshair(FHitResult& result);
+
 private:	
 
 	class ABaseCharacter* character;
@@ -47,4 +57,6 @@ private:
 	float baseWalkSpeed;
 	float aimWalkSpeed;
 		
+	bool isFirePressed;
+
 };

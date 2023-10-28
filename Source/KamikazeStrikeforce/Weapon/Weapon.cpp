@@ -4,8 +4,11 @@
 #include "Weapon.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Animation/AnimationAsset.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "BulletShell.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -114,6 +117,30 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	if (pickupWidget)
 	{
 		pickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeapon::Fire(const FVector hitLocation)
+{
+	if (fireAnimation)
+	{
+		weaponMesh->PlayAnimation(fireAnimation, false);
+	}
+
+	if (bulletShellClass)
+	{
+		auto spawnSocket = GetWeaponMesh()->GetSocketByName(bulletShellSpawnSocketName);
+		if (spawnSocket)
+		{
+			FTransform socketTransform = spawnSocket->GetSocketTransform(GetWeaponMesh());
+			if (bulletShellClass)
+			{
+				if (GetWorld())
+				{
+					GetWorld()->SpawnActor<ABulletShell>(bulletShellClass, socketTransform);
+				}
+			}
+		}
 	}
 }
 
