@@ -163,24 +163,31 @@ void UCombatComponent::TraceCrosshair(FHitResult& result)
 	FVector crosshairWorldLocation;
 	FVector crosshairWorldDirection;
 	bool success = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), crosshairLocation, crosshairWorldLocation, crosshairWorldDirection);
-	if (success)
+	if (success && character && equippedWeapon)
 	{
 		FVector start = crosshairWorldLocation ;
-		if (character)
-		{
-			float dist = (character->GetActorLocation() - start).Size();
-			start += crosshairWorldDirection * (dist + 250.f);
-		}
+		
+		float dist = (character->GetActorLocation() - start).Size();
+		start += crosshairWorldDirection * (dist + 20.f);
+
 		FVector end = start + crosshairWorldDirection * 100000;
-		GetWorld()->LineTraceSingleByChannel( result, start, end, ECC_Visibility);
+
+		FCollisionQueryParams queryParams;
+		queryParams.AddIgnoredActor(character);
+		queryParams.AddIgnoredActor(equippedWeapon);
+		GetWorld()->LineTraceSingleByChannel(result, start, end, ECC_Visibility, queryParams);
 		if (!result.bBlockingHit)
 		{
-			result.ImpactPoint = end;			
+			result.ImpactPoint = end;
 		}
 
-		hitLocation = result.ImpactPoint;		
+		hitLocation = result.ImpactPoint;
 
-		DrawDebugSphere(GetWorld(), hitLocation, 10, 10, FColor::Red);
+		//DrawDebugSphere(GetWorld(), hitLocation, 10, 10, FColor::Red);
+		//DrawDebugLine(GetWorld(), start, hitLocation, FColor::Orange);
+
+		//if (GEngine && result.GetActor())
+			//GEngine->AddOnScreenDebugMessage(-1, GetWorld()->DeltaTimeSeconds, FColor::Cyan, FString::Printf(TEXT("Hit Name: %s"), *result.GetActor()->GetFName().ToString()));
 
 		if (result.GetActor() && Cast<ICrosshairHitInterface>(result.GetActor()))
 		{
@@ -190,6 +197,7 @@ void UCombatComponent::TraceCrosshair(FHitResult& result)
 		{
 			HUDPackage.crosshairColor = FLinearColor::White;
 		}
+		
 	}
 }
 
