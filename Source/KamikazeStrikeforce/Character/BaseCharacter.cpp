@@ -116,7 +116,21 @@ void ABaseCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AimOffset(DeltaTime);
-	HideCamIfCharClose();
+	/*if (GetLocalRole() > ROLE_SimulatedProxy)
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		lastRepMovementUpdateTime += DeltaTime;
+		if (lastRepMovementUpdateTime > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+		CalculateAO_Pitch();
+	}*/
+	if(IsLocallyControlled())
+		HideCamIfCharClose();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -154,15 +168,77 @@ void ABaseCharacter::FireReleased()
 	}
 }
 
+
+void ABaseCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	/*SimProxiesTurn();
+
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Cyan, FString::Printf(TEXT("Turn = %d"), turnInPlace));
+
+	lastRepMovementUpdateTime = 0;*/
+}
+
+void ABaseCharacter::SimProxiesTurn()
+{
+	if (combat && combat->equippedWeapon)
+	{	
+		rotateRootBone = false;
+		float speed = UKismetMathLibrary::VSizeXY(GetCharacterMovement()->Velocity);
+		bool isInAir = (GetCharacterMovement()->IsFalling() || GetCharacterMovement()->IsFlying());
+		if (speed > 0.0f || isInAir)
+		{
+			turnInPlace = ETurnInPlace::None;
+			return;
+		}
+				
+		proxyPrevRot = proxyRot;
+		proxyRot = GetActorRotation();
+		proxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(proxyRot, proxyPrevRot).Yaw;
+
+
+		float turnThreshold = .25f;
+
+		//ProxyRotationLastFrame = ProxyRotation;
+		//ProxyRotation = GetActorRotation();
+		//ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+
+		UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), proxyYaw);
+
+		if (FMath::Abs(proxyYaw) > turnThreshold)
+		{
+			if (proxyYaw > turnThreshold)
+			{
+				turnInPlace = ETurnInPlace::Right;
+			}
+			else if (proxyYaw < -turnThreshold)
+			{
+				turnInPlace = ETurnInPlace::Left;
+			}
+			else
+			{
+				turnInPlace = ETurnInPlace::None;
+			}
+			return;
+		}
+		turnInPlace = ETurnInPlace::None;
+
+
+	}
+}
+
 void ABaseCharacter::AimOffset(float deltaTime)
 {
 	if (combat && combat->equippedWeapon)
 	{
+		
 		float speed = UKismetMathLibrary::VSizeXY(GetCharacterMovement()->Velocity);
 		bool isInAir = (GetCharacterMovement()->IsFalling() || GetCharacterMovement()->IsFlying());
 
 		if (speed == 0.0f && !isInAir)
-		{
+		{	
+			rotateRootBone = true;
 			FRotator currentAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 			FRotator deltaAimRot = UKismetMathLibrary::NormalizedDeltaRotator(currentAimRot, startAimRot);
 			AO_Yaw = deltaAimRot.Yaw;
@@ -172,21 +248,27 @@ void ABaseCharacter::AimOffset(float deltaTime)
 		}
 		if (speed > 0.0f || isInAir)
 		{
+			rotateRootBone = false;
 			startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 			AO_Yaw = 0.0f;
 			bUseControllerRotationYaw = true;
 			turnInPlace = ETurnInPlace::None;
 		}
 
-		AO_Pitch = GetBaseAimRotation().Pitch;
-		if (AO_Pitch > 90.0f && !IsLocallyControlled())
-		{
-			AO_Pitch = FMath::GetMappedRangeValueClamped(FVector2D(270.0f, 360.0f), FVector2D(-90.0f, 0.0f), AO_Pitch);
-		}
+		CalculateAO_Pitch();
 
-		//if GEngine)
-			//ngine->AddOnScreenDebugMessage(-1, deltaTime, FColor::Cyan, FString::Printf(TEXT("AO Yaw = %f"), AO_Yaw));
 	}
+}
+
+void ABaseCharacter::CalculateAO_Pitch()
+{
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.0f && !IsLocallyControlled())
+	{
+		AO_Pitch = FMath::GetMappedRangeValueClamped(FVector2D(270.0f, 360.0f), FVector2D(-90.0f, 0.0f), AO_Pitch);
+	}
+	//if GEngine)
+		//ngine->AddOnScreenDebugMessage(-1, deltaTime, FColor::Cyan, FString::Printf(TEXT("AO Yaw = %f"), AO_Yaw));
 }
 
 void ABaseCharacter::UpdateTurnInPlace(float deltaTime)
@@ -206,23 +288,38 @@ void ABaseCharacter::UpdateTurnInPlace(float deltaTime)
 	}
 
 	if (turnInPlace != ETurnInPlace::None)
-	{
-		interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 5.0f);
-		AO_Yaw = interpAO_Yaw;
-		if (FMath::Abs(AO_Yaw) < 15.0f)
+	{	
+		if (turnInPlace == ETurnInPlace::Right)
 		{
-			turnInPlace = ETurnInPlace::None;
-			startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
-			//AO_Yaw = 0.0f;
+			interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 5.0f);
+			AO_Yaw = interpAO_Yaw;
+			if (FMath::Abs(AO_Yaw) < 15.0f)
+			{
+				turnInPlace = ETurnInPlace::None;
+				startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+			}
+		}
+		else if (turnInPlace == ETurnInPlace::Left)
+		{
+			interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, 0.0f, deltaTime, 3.0f);
+			AO_Yaw = interpAO_Yaw;
+			if (FMath::Abs(AO_Yaw) < 17.0f)
+			{
+				turnInPlace = ETurnInPlace::None;
+				startAimRot = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
+			}
 		}
 	}
 	
 }
 
+
+
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
+	{
 
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
@@ -390,6 +487,7 @@ FVector ABaseCharacter::GetHitLocation()
 	 return combat->GetHitLocation(); 
 }
 
+
 AWeapon* ABaseCharacter::GetEquippedWeapon()
 {
 	if (combat)
@@ -404,6 +502,21 @@ void ABaseCharacter::PlayFireMontage(bool isAiming)
 	{
 		animInstance->Montage_Play(fireMontage);
 		FName section = isAiming ? FName("FireAim") : FName("FireHip");
+		animInstance->Montage_JumpToSection(section);
+	}
+}
+
+void ABaseCharacter::MulticastHitReact_Implementation()
+{
+	PlayHitReactMontage();
+}
+
+void ABaseCharacter::PlayHitReactMontage()
+{
+	if (animInstance && hitReactMontage)
+	{
+		animInstance->Montage_Play(hitReactMontage);
+		FName section("FromFront");
 		animInstance->Montage_JumpToSection(section);
 	}
 }

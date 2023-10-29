@@ -41,6 +41,8 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		isAiming = character->IsAiming();
 
+		rotateRootBone = character->ShouldRotateRootBone();
+
 		// Offset Yaw for Strafing
 		FRotator AimRotation = character->GetBaseAimRotation();
 		FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(character->GetVelocity());

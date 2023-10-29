@@ -95,7 +95,11 @@ protected:
 
 	void AimOffset(float deltaTime);
 
+	void CalculateAO_Pitch();
+
 	void UpdateTurnInPlace(float deltaTime);
+
+	void SimProxiesTurn();
 
 protected:
 	// APawn interface
@@ -124,7 +128,11 @@ public:
 
 	FORCEINLINE UCameraComponent* GetCamera() const { return FollowCamera; }
 
+	FORCEINLINE bool ShouldRotateRootBone() const { return rotateRootBone; }
+
 	FVector GetHitLocation();
+
+	virtual void OnRep_ReplicatedMovement() override;
 
 private:
 
@@ -143,11 +151,19 @@ private:
 	FRotator startAimRot;
 
 	ETurnInPlace turnInPlace;
+	bool rotateRootBone;
+	FRotator proxyRot;
+	FRotator proxyPrevRot;
+	float proxyYaw;
+	float lastRepMovementUpdateTime;
 
 	class UBaseAnimInstance* animInstance;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* fireMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* hitReactMontage;
 
 	void HideCamIfCharClose();
 
@@ -167,5 +183,10 @@ public:
 	AWeapon* GetEquippedWeapon();
 
 	void PlayFireMontage(bool isAiming);
+
+	void PlayHitReactMontage();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHitReact();
 };
 
