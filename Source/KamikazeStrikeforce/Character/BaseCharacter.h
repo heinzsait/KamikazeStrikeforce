@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
+#include "KamikazeStrikeforce/Interfaces/CrosshairHitInterface.h"
 #include "BaseCharacter.generated.h"
 
 class USpringArmComponent;
@@ -14,11 +15,13 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class UCombatComponent;
+class ABasePlayerController;
+class ABaseHUD;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config = Game)
-class ABaseCharacter : public ACharacter
+class ABaseCharacter : public ACharacter, public ICrosshairHitInterface
 {
 	GENERATED_BODY()
 
@@ -109,13 +112,24 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	FORCEINLINE float GetAO_Yaw() { return AO_Yaw; }
+	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 
-	FORCEINLINE float GetAO_Pitch() { return AO_Pitch; }
+	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 
-	FORCEINLINE ETurnInPlace GetTurnInPlace() { return turnInPlace; }
+	FORCEINLINE ETurnInPlace GetTurnInPlace() const { return turnInPlace; }
+
+	FORCEINLINE ABasePlayerController* GetController() const { return playerController; }
+
+	FORCEINLINE ABaseHUD* GetMainHUD() const { return mainHUD; }
+
+	FORCEINLINE UCameraComponent* GetCamera() const { return FollowCamera; }
+
+	FVector GetHitLocation();
 
 private:
+
+	ABasePlayerController* playerController;
+	ABaseHUD* mainHUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* overlappingWeapon;
@@ -134,6 +148,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* fireMontage;
+
+	void HideCamIfCharClose();
+
+	UPROPERTY(EditAnywhere)
+	float camHideThreshold = 200.0f;
 
 public:
 	

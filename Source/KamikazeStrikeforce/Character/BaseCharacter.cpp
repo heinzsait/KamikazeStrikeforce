@@ -3,6 +3,8 @@
 
 #include "BaseCharacter.h"
 #include "BaseAnimInstance.h"
+#include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
+#include "KamikazeStrikeforce/HUD/BaseHUD.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -61,7 +63,9 @@ ABaseCharacter::ABaseCharacter()
 	combat->SetIsReplicated(true);
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_GameTraceChannel1);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
 	turnInPlace = ETurnInPlace::None;
 
@@ -69,19 +73,29 @@ ABaseCharacter::ABaseCharacter()
 	MinNetUpdateFrequency = 33.0f;
 }
 
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ABaseCharacter, overlappingWeapon, COND_OwnerOnly);
+}
 
 void ABaseCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
 
+	playerController = Cast<ABasePlayerController>(Controller);
+
 	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	if (playerController)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(playerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+
+		mainHUD = Cast<ABaseHUD>(playerController->GetHUD());
 	}
 
 	animInstance = Cast<UBaseAnimInstance>(GetMesh()->GetAnimInstance());
@@ -100,7 +114,9 @@ void ABaseCharacter::PostInitializeComponents()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	AimOffset(DeltaTime);
+	HideCamIfCharClose();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -168,8 +184,8 @@ void ABaseCharacter::AimOffset(float deltaTime)
 			AO_Pitch = FMath::GetMappedRangeValueClamped(FVector2D(270.0f, 360.0f), FVector2D(-90.0f, 0.0f), AO_Pitch);
 		}
 
-		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, deltaTime, FColor::Cyan, FString::Printf(TEXT("AO Yaw = %f"), AO_Yaw));
+		//if GEngine)
+			//ngine->AddOnScreenDebugMessage(-1, deltaTime, FColor::Cyan, FString::Printf(TEXT("AO Yaw = %f"), AO_Yaw));
 	}
 }
 
@@ -303,12 +319,26 @@ void ABaseCharacter::CrouchPressed()
 		UnCrouch();
 }
 
-void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ABaseCharacter::HideCamIfCharClose()
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION(ABaseCharacter, overlappingWeapon, COND_OwnerOnly);
+	if (IsLocallyControlled() && FVector::Distance(FollowCamera->GetComponentLocation(), GetActorLocation()) < camHideThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->GetWeaponMesh())
+		{
+			combat->equippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+		if (combat && combat->equippedWeapon && combat->equippedWeapon->GetWeaponMesh())
+		{
+			combat->equippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
 }
+
 
 void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 {
@@ -353,6 +383,11 @@ bool ABaseCharacter::IsEquipped()
 bool ABaseCharacter::IsAiming()
 {
 	return (combat && combat->isAiming);
+}
+
+FVector ABaseCharacter::GetHitLocation()
+{
+	 return combat->GetHitLocation(); 
 }
 
 AWeapon* ABaseCharacter::GetEquippedWeapon()

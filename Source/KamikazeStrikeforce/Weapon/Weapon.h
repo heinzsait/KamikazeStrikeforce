@@ -31,6 +31,19 @@ public:
 
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return weaponMesh; }
 
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	class UTexture2D* centerCH;
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	UTexture2D* topCH;
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	UTexture2D* bottomCH;
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	UTexture2D* leftCH;
+	UPROPERTY(EditAnywhere, Category = CrossHairs)
+	UTexture2D* rightCH;
+
+	FORCEINLINE float GetZoomFOV() { return zoomedFOV; }
+	FORCEINLINE float GetZoomSpeed() { return zoomSpeed; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -61,4 +74,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	FName bulletShellSpawnSocketName = FName("AmmoEject");
+
+	UPROPERTY(EditAnywhere)
+	float zoomedFOV = 30.0f;
+
+	UPROPERTY(EditAnywhere)
+	float zoomSpeed = 20.0f;
 };

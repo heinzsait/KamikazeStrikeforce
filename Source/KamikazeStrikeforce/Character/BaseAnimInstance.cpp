@@ -67,6 +67,16 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			character->GetMesh()->TransformToBoneSpace(FName("hand_r"), leftHandTransform.GetLocation(), FRotator::ZeroRotator, outLocation, outRotation);
 			leftHandTransform.SetLocation(outLocation);
 			leftHandTransform.SetRotation(FQuat(outRotation));
+
+			//Correct aim offset only fo local player...
+			if (character->IsLocallyControlled())
+			{
+				FTransform rightHandTransform = equippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
+				FVector aimDirection = rightHandTransform.GetLocation() - character->GetHitLocation();
+				FRotator lookAtRot = UKismetMathLibrary::FindLookAtRotation(rightHandTransform.GetLocation(), rightHandTransform.GetLocation() + aimDirection);
+				rightHandRotation = FMath::RInterpTo(rightHandRotation, lookAtRot, DeltaSeconds, 30.0f);
+				isLocallyControlled = true;
+			}
 		}
 
 		turnInPlace = character->GetTurnInPlace();

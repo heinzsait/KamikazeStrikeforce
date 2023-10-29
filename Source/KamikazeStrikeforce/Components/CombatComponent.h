@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "KamikazeStrikeforce/HUD/BaseHUD.h"
 #include "CombatComponent.generated.h"
 
 class AWeapon;
@@ -25,6 +26,8 @@ public:
 	UPROPERTY(Replicated)
 	bool isAiming;
 
+	FORCEINLINE FVector GetHitLocation() { return hitLocation; }
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -44,6 +47,8 @@ protected:
 
 	void TraceCrosshair(FHitResult& result);
 
+	void SetHUDCrosshair(float DeltaTime);
+
 private:	
 
 	class ABaseCharacter* character;
@@ -58,5 +63,25 @@ private:
 	float aimWalkSpeed;
 		
 	bool isFirePressed;
+
+	FHitResult hitResult;
+	FVector hitLocation;
+
+	FHUDPackage HUDPackage;
+	float crosshairVelocityFactor;
+	float crosshairInAirFactor;
+	float crosshairAimFactor;
+	float crosshairShootFactor;
+
+	float defaultFOV;
+	float currentFOV;
+	
+	UPROPERTY(EditAnywhere)
+	float zoomedFOV = 30.0f;
+
+	UPROPERTY(EditAnywhere)
+	float zoomSpeed = 20.0f;
+
+	void LerpFOV(float DeltaTime);
 
 };

@@ -23,6 +23,7 @@ AProjectile::AProjectile()
 	collisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	collisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	collisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	collisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
 	projectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(FName("ProjectileMovementComponent"));
 	projectileMovementComponent->bRotationFollowsVelocity = true;
