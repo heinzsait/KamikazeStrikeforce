@@ -14,7 +14,7 @@
 AProjectile::AProjectile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
 	collisionBox = CreateDefaultSubobject<UBoxComponent>(FName("Collision Box"));
@@ -49,18 +49,12 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ABaseCharacter* playerChar = Cast<ABaseCharacter>(OtherActor);
+	/*ABaseCharacter* playerChar = Cast<ABaseCharacter>(OtherActor);
 	if (playerChar)
 	{
 		playerChar->MulticastHitReact();
-	}
+	}*/
 	Destroy();
-}
-
-// Called every frame
-void AProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AProjectile::Destroyed()

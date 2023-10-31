@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "KamikazeStrikeforce/Interfaces/CrosshairHitInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BaseCharacter.generated.h"
 
 class USpringArmComponent;
@@ -110,6 +111,11 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+	void UpdatePlayerHUDHealth();
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -134,10 +140,25 @@ public:
 
 	virtual void OnRep_ReplicatedMovement() override;
 
+	void Eliminate();
+	bool isEliminated = false;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminate();
+
 private:
 
 	ABasePlayerController* playerController;
 	ABaseHUD* mainHUD;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = Stats)
+	float health = 100.0f; 
+
+	UPROPERTY(EditAnywhere, Category = Stats)
+	float maxHealth = 100.0f;
+
+	UFUNCTION()
+	void OnRep_Health();
 
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AWeapon* overlappingWeapon;
@@ -170,6 +191,36 @@ private:
 	UPROPERTY(EditAnywhere)
 	float camHideThreshold = 200.0f;
 
+	FTimerHandle eliminationTimer;
+	void EliminationFinished();
+
+	UPROPERTY(EditDefaultsOnly)
+	float eliminiationDelay = 3.0f;
+
+	//Dissolve Effect...
+
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* dissolveTimeline;
+	FOnTimelineFloat dissolveTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* dissolveCurve;
+
+	UPROPERTY(EditAnywhere)
+	float startDissolveValue;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float dissolveValue);
+	void StartDissolve();
+
+	// Dynamic instance that we can change at runtime
+	UPROPERTY(VisibleAnywhere)
+	TArray<UMaterialInstanceDynamic*> dynamicDissolveMaterialInstances;
+
+	// Material instance set on the Blueprint, used with the dynamic material instance
+	UPROPERTY(EditAnywhere)
+	TArray<UMaterialInstance*> dissolveMaterialInstances;
+
 public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -186,7 +237,7 @@ public:
 
 	void PlayHitReactMontage();
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHitReact();
+	/*UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHitReact();*/
 };
 

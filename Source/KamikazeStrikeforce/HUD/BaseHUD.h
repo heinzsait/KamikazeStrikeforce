@@ -33,6 +33,16 @@ public :
 
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& package) { HUDPackage = package; }
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> characterOverlayClass;
+
+	class UCharacterOverlay* characterOverlay;
+
+protected:
+
+	virtual void BeginPlay() override;
+	void AddOverlay();
+
 private:
 
 	FHUDPackage HUDPackage;

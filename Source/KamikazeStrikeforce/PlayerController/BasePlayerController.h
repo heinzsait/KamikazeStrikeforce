@@ -13,5 +13,11 @@ UCLASS()
 class KAMIKAZESTRIKEFORCE_API ABasePlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+public:
+	virtual void BeginPlay() override;
+
+	void SetHUDHealth(float hp, float maxHP);
+
+private:
+	class ABaseHUD* HUD;
 };

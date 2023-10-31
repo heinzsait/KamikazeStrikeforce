@@ -2,6 +2,25 @@
 
 
 #include "BaseHUD.h"
+#include "GameFramework/PlayerController.h"
+#include "CharacterOverlay.h"
+
+void ABaseHUD::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AddOverlay();
+}
+
+void ABaseHUD::AddOverlay()
+{
+	APlayerController* playerController = GetOwningPlayerController();
+	if (playerController && characterOverlayClass)
+	{
+		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
+		characterOverlay->AddToViewport();
+	}
+}
 
 void ABaseHUD::DrawHUD()
 {
@@ -32,6 +51,7 @@ void ABaseHUD::DrawHUD()
 			DrawCrossHair(HUDPackage.rightCH, viewPortCenter, FVector2D(spreadScale, 0.f), color);
 	}
 }
+
 
 void ABaseHUD::DrawCrossHair(UTexture2D* tex, FVector2D center, FVector2D spread, FLinearColor color)
 {

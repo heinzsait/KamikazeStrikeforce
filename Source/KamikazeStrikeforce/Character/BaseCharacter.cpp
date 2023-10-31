@@ -5,6 +5,7 @@
 #include "BaseAnimInstance.h"
 #include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
 #include "KamikazeStrikeforce/HUD/BaseHUD.h"
+#include "KamikazeStrikeforce/GameMode/KamikazeStrikeforceGameMode.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -18,6 +19,7 @@
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
 #include "KamikazeStrikeforce/Components/CombatComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -67,17 +69,24 @@ ABaseCharacter::ABaseCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
+	dissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Dissolve Timeline Component"));
+
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 	turnInPlace = ETurnInPlace::None;
 
 	NetUpdateFrequency = 66.0f;
 	MinNetUpdateFrequency = 33.0f;
 }
 
+
+
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ABaseCharacter, overlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABaseCharacter, health);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -96,9 +105,15 @@ void ABaseCharacter::BeginPlay()
 		}
 
 		mainHUD = Cast<ABaseHUD>(playerController->GetHUD());
+		playerController->SetHUDHealth(health, maxHealth);
 	}
 
 	animInstance = Cast<UBaseAnimInstance>(GetMesh()->GetAnimInstance());
+
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ABaseCharacter::ReceiveDamage);
+	}
 }
 
 void ABaseCharacter::PostInitializeComponents()
@@ -179,6 +194,7 @@ void ABaseCharacter::OnRep_ReplicatedMovement()
 
 	lastRepMovementUpdateTime = 0;*/
 }
+
 
 void ABaseCharacter::SimProxiesTurn()
 {
@@ -437,6 +453,7 @@ void ABaseCharacter::HideCamIfCharClose()
 }
 
 
+
 void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 {
 
@@ -456,6 +473,7 @@ void ABaseCharacter::SetOverlappingWeapon(AWeapon* weapon)
 		}
 	}
 }
+
 
 void ABaseCharacter::OnRep_OverlappingWeapon(AWeapon* lastWeapon)
 {
@@ -506,14 +524,14 @@ void ABaseCharacter::PlayFireMontage(bool isAiming)
 	}
 }
 
-void ABaseCharacter::MulticastHitReact_Implementation()
-{
-	PlayHitReactMontage();
-}
+//void ABaseCharacter::MulticastHitReact_Implementation()
+//{
+//	PlayHitReactMontage();
+//}
 
 void ABaseCharacter::PlayHitReactMontage()
 {
-	if (animInstance && hitReactMontage)
+	if (animInstance && hitReactMontage && !animInstance->Montage_IsPlaying(hitReactMontage))
 	{
 		animInstance->Montage_Play(hitReactMontage);
 		FName section("FromFront");
@@ -521,3 +539,103 @@ void ABaseCharacter::PlayHitReactMontage()
 	}
 }
 
+void ABaseCharacter::OnRep_Health()
+{
+	UpdatePlayerHUDHealth();
+	PlayHitReactMontage();
+}
+
+void ABaseCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	health = FMath::Clamp(health - Damage, 0.0f, maxHealth);
+	PlayHitReactMontage();
+	UpdatePlayerHUDHealth();
+
+	if (health == 0.0f)
+	{
+		AKamikazeStrikeforceGameMode* gameMode = GetWorld()->GetAuthGameMode<AKamikazeStrikeforceGameMode>();
+		if (gameMode)
+		{
+			ABasePlayerController* attackerController = Cast<ABasePlayerController>(InstigatedBy);
+			gameMode->PlayerEliminated(this, playerController, attackerController);
+		}
+	}
+}
+
+void ABaseCharacter::UpdatePlayerHUDHealth()
+{
+	if(!playerController) 
+		playerController = Cast<ABasePlayerController>(Controller);
+
+	if (playerController)
+		playerController->SetHUDHealth(health, maxHealth);
+}
+
+
+void ABaseCharacter::Eliminate()
+{
+	MulticastEliminate();
+	GetWorld()->GetTimerManager().SetTimer(eliminationTimer, this, &ABaseCharacter::EliminationFinished, eliminiationDelay);
+}
+
+void ABaseCharacter::MulticastEliminate_Implementation()
+{
+	isEliminated = true;
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("play elim anim montage")));
+
+	if (dissolveMaterialInstances.Num() > 0)
+	{
+		for (int i = 0; i < dissolveMaterialInstances.Num(); i++)
+		{
+			auto inst = UMaterialInstanceDynamic::Create(dissolveMaterialInstances[i], this);
+			dynamicDissolveMaterialInstances.Add(inst);
+			GetMesh()->SetMaterial(i, inst);
+			inst->SetScalarParameterValue(TEXT("Dissolve"), startDissolveValue);
+			inst->SetScalarParameterValue(TEXT("Glow"), 200.f);
+		}
+		StartDissolve();
+	}
+
+	// Disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (playerController)
+	{
+		DisableInput(playerController);
+	}
+	// Disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+
+void ABaseCharacter::EliminationFinished()
+{
+	AKamikazeStrikeforceGameMode* gameMode = GetWorld()->GetAuthGameMode<AKamikazeStrikeforceGameMode>();
+	if (gameMode)
+	{
+		gameMode->RequestRespawn(this, playerController);
+	}
+}
+
+void ABaseCharacter::StartDissolve()
+{
+	dissolveTrack.BindDynamic(this, &ABaseCharacter::UpdateDissolveMaterial);
+	if (dissolveCurve && dissolveTimeline)
+	{
+		dissolveTimeline->AddInterpFloat(dissolveCurve, dissolveTrack);
+		dissolveTimeline->Play();
+	}
+}
+
+void ABaseCharacter::UpdateDissolveMaterial(float dissolveValue)
+{
+	if (dynamicDissolveMaterialInstances.Num() > 0)
+	{
+		for (int i = 0; i < dynamicDissolveMaterialInstances.Num(); i++)
+		{
+			dynamicDissolveMaterialInstances[i]->SetScalarParameterValue(TEXT("Dissolve"), dissolveValue);
+		}
+	}
+}
