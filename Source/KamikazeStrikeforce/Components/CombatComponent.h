@@ -39,6 +39,8 @@ protected:
 
 	void FirePressed(bool isPressed);
 
+	void Fire();
+
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize hitTarget);
 
@@ -84,4 +86,8 @@ private:
 
 	void LerpFOV(float DeltaTime);
 
+	FTimerHandle fireTimer;
+	bool canFire = true;
+	void StartFireTimer();
+	void FireTimerFinished();
 };

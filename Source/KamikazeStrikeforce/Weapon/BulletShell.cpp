@@ -32,8 +32,11 @@ void ABulletShell::BeginPlay()
 
 void ABulletShell::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (shellSFX)
+	if (shellSFX && !SFX_Played)
+	{
 		UGameplayStatics::PlaySoundAtLocation(this, shellSFX, GetActorLocation());
+		SFX_Played = true;
+	}
 
 	SetLifeSpan(5);
 }

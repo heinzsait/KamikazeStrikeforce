@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "TimerManager.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -42,6 +43,8 @@ void UCombatComponent::BeginPlay()
 		defaultFOV = character->GetCamera()->FieldOfView;
 		currentFOV = character->GetCamera()->FieldOfView;
 	}	
+
+	canFire = true;
 }
 
 
@@ -106,6 +109,8 @@ void UCombatComponent::LerpFOV(float DeltaTime)
 	}
 }
 
+
+
 void UCombatComponent::ServerSetAiming_Implementation(bool _isAiming)
 {
 	isAiming = _isAiming;
@@ -128,11 +133,22 @@ void UCombatComponent::SetAiming(bool _isAiming)
 void UCombatComponent::FirePressed(bool isPressed)
 {
 	isFirePressed = isPressed;
+
 	if (isFirePressed)
+		Fire();
+}
+
+void UCombatComponent::Fire()
+{
+	if (canFire)
 	{
+		//if (GEngine)
+			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString::Printf(TEXT("Fire...")));
+
 		ServerFire(hitLocation);
 		if (equippedWeapon)
-			crosshairShootFactor = 1.0f;
+			crosshairShootFactor = 0.75f;
+		StartFireTimer();
 	}
 }
 
@@ -150,6 +166,23 @@ void UCombatComponent::MultiCastFire_Implementation(const FVector_NetQuantize hi
 	}
 }
 
+void UCombatComponent::StartFireTimer()
+{
+	if (character && equippedWeapon)
+	{
+		canFire = false;
+		character->GetWorldTimerManager().SetTimer(fireTimer, this, &UCombatComponent::FireTimerFinished, equippedWeapon->fireDelay);
+	}
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	canFire = true;
+	if (isFirePressed && equippedWeapon && equippedWeapon->isAutomatic)
+	{
+		Fire();
+	}
+}
 
 void UCombatComponent::TraceCrosshair(FHitResult& result)
 {

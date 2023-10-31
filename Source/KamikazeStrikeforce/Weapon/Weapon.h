@@ -45,6 +45,13 @@ public:
 	FORCEINLINE float GetZoomFOV() { return zoomedFOV; }
 	FORCEINLINE float GetZoomSpeed() { return zoomSpeed; }
 
+
+	UPROPERTY(EditAnywhere)
+	float fireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere)
+	bool isAutomatic;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

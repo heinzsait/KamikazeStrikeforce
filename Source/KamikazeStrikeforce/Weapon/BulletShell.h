@@ -32,4 +32,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundBase* shellSFX;
+
+	bool SFX_Played = false;
 };
