@@ -7,6 +7,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UBaseAnimInstance::NativeInitializeAnimation()
@@ -87,5 +88,7 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 
 		turnInPlace = character->GetTurnInPlace();
+
+		useFABRIK = (character->GetCombatState() != ECombatState::Reloading);
 	}
 }

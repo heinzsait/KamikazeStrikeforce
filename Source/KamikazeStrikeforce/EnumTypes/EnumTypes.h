@@ -11,6 +11,25 @@ enum class EWeaponState : uint8
 };
 
 UENUM(BlueprintType)
+enum class EWeaponTypes : uint8
+{
+	AssaultRifle UMETA(DisplayName = "AssaultRifle"),
+	Pistol UMETA(DisplayName = "Pistol"),
+	Shotgun UMETA(DisplayName = "Shotgun"),
+
+	MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
+enum class ECombatState : uint8
+{
+	Unoccupied UMETA(DisplayName = "Unoccupied"),
+	Reloading UMETA(DisplayName = "Reloading"),
+
+	MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
 enum class ETurnInPlace : uint8
 {
 	None UMETA(DisplayName = "None"),

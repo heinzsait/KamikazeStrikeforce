@@ -36,8 +36,7 @@ public :
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UUserWidget> characterOverlayClass;
 
-	UPROPERTY()
-	class UCharacterOverlay* characterOverlay;
+	class UCharacterOverlay* GetOverlay() const;
 
 protected:
 
@@ -50,5 +49,7 @@ private:
 	void DrawCrossHair(UTexture2D* tex, FVector2D center, FVector2D spread, FLinearColor color);
 
 	float crossHairSpreadMax = 16.0f;
+
+	UCharacterOverlay* characterOverlay = nullptr;
 
 };

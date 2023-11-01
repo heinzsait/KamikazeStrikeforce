@@ -15,32 +15,56 @@ void ABasePlayerController::BeginPlay()
 
 void ABasePlayerController::SetHUDHealth(float hp, float maxHP)
 {
-	if(!HUD) Cast<ABaseHUD>(GetHUD());
+	if (!IsLocalController()) return;
+	if(!HUD) HUD = Cast<ABaseHUD>(GetHUD());
 	
-	if (HUD)
+	if (HUD && HUD->GetOverlay())
 	{
-		HUD->characterOverlay->SetHealth(hp, maxHP);
+		HUD->GetOverlay()->SetHealth(hp, maxHP);
 	}
-
 }
 
 void ABasePlayerController::SetHUDScore(float score)
 {
-	if (!HUD) Cast<ABaseHUD>(GetHUD());
+	if (!IsLocalController()) return;
+	if (!HUD) HUD = Cast<ABaseHUD>(GetHUD());
 
-	if (HUD)
+	if (HUD && HUD->GetOverlay())
 	{
-		HUD->characterOverlay->SetScore(score);
+		HUD->GetOverlay()->SetScore(score);
 	}
 }
 
 void ABasePlayerController::SetHUDDeaths(int deaths)
 {
-	if (!HUD) Cast<ABaseHUD>(GetHUD());
+	if (!IsLocalController()) return;
+	if (!HUD) HUD = Cast<ABaseHUD>(GetHUD());
 
-	if (HUD)
+	if (HUD && HUD->GetOverlay())
 	{
-		HUD->characterOverlay->SetDeaths(deaths);
+		HUD->GetOverlay()->SetDeaths(deaths);
+	}
+}
+
+void ABasePlayerController::SetHUDAmmo(int ammo)
+{
+	if (!IsLocalController()) return;
+	if (!HUD) HUD = Cast<ABaseHUD>(GetHUD());
+
+	if (HUD && HUD->GetOverlay())
+	{
+		HUD->GetOverlay()->SetAmmo(ammo);
+	}
+}
+
+void ABasePlayerController::SetHUDCarriedAmmo(int carriedAmmo)
+{
+	if (!IsLocalController()) return;
+	if (!HUD) HUD = Cast<ABaseHUD>(GetHUD());
+
+	if (HUD && HUD->GetOverlay())
+	{
+		HUD->GetOverlay()->SetCarriedAmmo(carriedAmmo);
 	}
 }
 

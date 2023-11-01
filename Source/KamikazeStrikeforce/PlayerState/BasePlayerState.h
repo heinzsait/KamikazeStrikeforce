@@ -17,6 +17,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AddScore(float score);
 	virtual void OnRep_Score() override;
+	void SetScoreHUD();
 	void AddDeaths(int death);
 
 private:
@@ -30,4 +31,5 @@ private:
 
 	UFUNCTION()
 	void OnRep_Deaths();
+	void SetDeathsHUD();
 };

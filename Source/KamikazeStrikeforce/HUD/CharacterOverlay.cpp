@@ -30,3 +30,19 @@ void UCharacterOverlay::SetDeaths(int deaths)
 		deathsText->SetText(FText::FromString(FString::Printf(TEXT("Deaths: %d"), deaths)));
 	}
 }
+
+void UCharacterOverlay::SetAmmo(int ammo)
+{
+	if (ammoText)
+	{
+		ammoText->SetText(FText::FromString(FString::Printf(TEXT("Ammo: %d"), ammo)));
+	}
+}
+
+void UCharacterOverlay::SetCarriedAmmo(int carriedAmmo)
+{
+	if (carriedAmmoText)
+	{
+		carriedAmmoText->SetText(FText::FromString(FString::Printf(TEXT("/ %d"), carriedAmmo)));
+	}
+}

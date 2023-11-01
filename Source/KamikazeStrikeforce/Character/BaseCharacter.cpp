@@ -7,6 +7,7 @@
 #include "KamikazeStrikeforce/PlayerState/BasePlayerState.h"
 #include "KamikazeStrikeforce/HUD/BaseHUD.h"
 #include "KamikazeStrikeforce/GameMode/KamikazeStrikeforceGameMode.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -372,6 +373,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ABaseCharacter::FirePressed);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ABaseCharacter::FireReleased);
+
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ABaseCharacter::ReloadPressed);
 	}
 	else
 	{
@@ -444,6 +447,13 @@ void ABaseCharacter::CrouchPressed()
 	else
 		UnCrouch();
 }
+
+
+void ABaseCharacter::ReloadPressed()
+{
+	if (combat) combat->Reload();
+}
+
 
 void ABaseCharacter::HideCamIfCharClose()
 {
@@ -526,14 +536,19 @@ ABaseHUD* ABaseCharacter::GetMainHUD()
 	return mainHUD;
 }
 
-ABasePlayerController* ABaseCharacter::GetController()
+ABasePlayerController* ABaseCharacter::GetPlayerController()
 {
 	if(!playerController) playerController = Cast<ABasePlayerController>(Controller);
 
 	return playerController; 
 }
 
-FVector ABaseCharacter::GetHitLocation() 
+ECombatState ABaseCharacter::GetCombatState() const
+{
+	return combat->combatState; 
+}
+
+FVector ABaseCharacter::GetHitLocation()
 {
 	 return combat->GetHitLocation(); 
 }
@@ -557,10 +572,25 @@ void ABaseCharacter::PlayFireMontage(bool isAiming)
 	}
 }
 
-//void ABaseCharacter::MulticastHitReact_Implementation()
-//{
-//	PlayHitReactMontage();
-//}
+void ABaseCharacter::PlayReloadMontage()
+{
+	if (animInstance && reloadMontage && GetEquippedWeapon())
+	{
+		animInstance->Montage_Play(reloadMontage);
+		FName section;
+		switch (GetEquippedWeapon()->GetWeaponType())
+		{
+			case EWeaponTypes::AssaultRifle:
+				section = FName("Rifle");
+				break;
+
+			default:
+				section = FName("Rifle");
+				break;
+		}
+		animInstance->Montage_JumpToSection(section);
+	}
+}
 
 void ABaseCharacter::PlayHitReactMontage()
 {
@@ -619,6 +649,11 @@ void ABaseCharacter::Eliminate()
 	GetWorld()->GetTimerManager().SetTimer(eliminationTimer, this, &ABaseCharacter::EliminationFinished, eliminiationDelay);
 }
 
+UCombatComponent* ABaseCharacter::GetCombat() const
+{
+	return combat;
+}
+
 void ABaseCharacter::MulticastEliminate_Implementation()
 {
 	isEliminated = true;
@@ -643,6 +678,8 @@ void ABaseCharacter::MulticastEliminate_Implementation()
 	if (playerController)
 	{
 		DisableInput(playerController);
+		playerController->SetHUDAmmo(0);
+		playerController->SetHUDCarriedAmmo(0);
 	}
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

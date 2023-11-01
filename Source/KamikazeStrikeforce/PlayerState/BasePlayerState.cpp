@@ -19,15 +19,18 @@ void ABasePlayerState::AddScore(float score)
 {
 	SetScore(GetScore() + score);
 
-	OnRep_Score();
+	SetScoreHUD();
 }
 
 void ABasePlayerState::OnRep_Score()
 {
 	Super::OnRep_Score();
 
-	//if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Score: %d"), GetScore()));
+	SetScoreHUD();
+}
 
+void ABasePlayerState::SetScoreHUD()
+{
 	if (!character) character = Cast<ABaseCharacter>(GetPawn());
 	if (character)
 	{
@@ -43,10 +46,15 @@ void ABasePlayerState::AddDeaths(int death)
 {
 	deaths += death;
 
-	OnRep_Deaths();
+	SetDeathsHUD();
 }
 
 void ABasePlayerState::OnRep_Deaths()
+{
+	SetDeathsHUD();
+}
+
+void ABasePlayerState::SetDeathsHUD()
 {
 	if (!character) character = Cast<ABaseCharacter>(GetPawn());
 	if (character)

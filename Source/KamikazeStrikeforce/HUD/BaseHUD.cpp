@@ -5,6 +5,7 @@
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
 
+
 void ABaseHUD::BeginPlay()
 {
 	Super::BeginPlay();
@@ -15,7 +16,7 @@ void ABaseHUD::BeginPlay()
 void ABaseHUD::AddOverlay()
 {
 	APlayerController* playerController = GetOwningPlayerController();
-	if (playerController && characterOverlayClass)
+	if (playerController && characterOverlayClass && playerController->IsLocalController())
 	{
 		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
 		characterOverlay->AddToViewport();
@@ -60,4 +61,10 @@ void ABaseHUD::DrawCrossHair(UTexture2D* tex, FVector2D center, FVector2D spread
 	const FVector2D texDrawPoint(center.X - (texWidth / 2.f) + spread.X, center.Y - (texHeight / 2.f) + spread.Y);
 
 	DrawTexture(tex, texDrawPoint.X, texDrawPoint.Y, texWidth, texHeight, 0.0f, 0.0f, 1.0f, 1.0f, color);
+}
+
+
+UCharacterOverlay* ABaseHUD::GetOverlay() const
+{
+	return characterOverlay;
 }

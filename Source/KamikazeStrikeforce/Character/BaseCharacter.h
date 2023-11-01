@@ -71,6 +71,10 @@ class ABaseCharacter : public ACharacter, public ICrosshairHitInterface
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* FireAction;
 
+	/** Reload Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ReloadAction;
+
 public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;
@@ -95,6 +99,8 @@ protected:
 
 	void FirePressed();
 	void FireReleased();
+
+	void ReloadPressed();
 
 	void AimOffset(float deltaTime);
 
@@ -132,7 +138,7 @@ public:
 
 	FORCEINLINE ETurnInPlace GetTurnInPlace() const { return turnInPlace; }
 
-	ABasePlayerController* GetController();
+	ABasePlayerController* GetPlayerController();
 
 	ABaseHUD* GetMainHUD();
 
@@ -143,6 +149,8 @@ public:
 	FORCEINLINE float GetHealth() const { return health; }
 	FORCEINLINE float GetMaxHealth() const { return maxHealth; }
 
+	ECombatState GetCombatState() const;
+
 	FVector GetHitLocation();
 
 	virtual void OnRep_ReplicatedMovement() override;
@@ -152,6 +160,9 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
+
+	UFUNCTION(BlueprintCallable)
+	UCombatComponent* GetCombat() const;
 
 private:
 
@@ -196,6 +207,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* fireMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* reloadMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* hitReactMontage;
@@ -251,6 +265,8 @@ public:
 	AWeapon* GetEquippedWeapon();
 
 	void PlayFireMontage(bool isAiming);
+
+	void PlayReloadMontage();
 
 	void PlayHitReactMontage();
 

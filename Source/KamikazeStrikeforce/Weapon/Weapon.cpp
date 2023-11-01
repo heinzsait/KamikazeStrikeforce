@@ -6,6 +6,7 @@
 #include "Components/WidgetComponent.h"
 #include "Animation/AnimationAsset.h"
 #include "KamikazeStrikeforce/Character/BaseCharacter.h"
+#include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "BulletShell.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -16,6 +17,7 @@ AWeapon::AWeapon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	SetReplicateMovement(true);
 
 	weaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon Mesh"));
 	SetRootComponent(weaponMesh);
@@ -53,20 +55,35 @@ void AWeapon::BeginPlay()
 	}
 }
 
-
-// Called every frame
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, weaponState);
+	DOREPLIFETIME(AWeapon, ammo);
 }
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+
+	if (!Owner)
+	{
+		playerController = nullptr;
+		character = nullptr;
+	}
+	else
+	{
+		UpdateHUDAmmo();
+	}
+}
+
+// Called every frame
+void AWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
 
 void AWeapon::SetWeaponState(EWeaponState state)
 {
@@ -127,6 +144,38 @@ void AWeapon::OnRep_WeaponState()
 	}
 }
 
+void AWeapon::OnRep_Ammo()
+{
+	UpdateHUDAmmo();
+}
+
+void AWeapon::UpdateAmmo()
+{
+	ammo = FMath::Clamp(ammo - 1, 0, magCapacity);
+
+	UpdateHUDAmmo();
+}
+
+void AWeapon::UpdateHUDAmmo()
+{
+	if (!character)
+		character = Cast<ABaseCharacter>(GetOwner());
+	if (character)
+	{
+		if (!playerController)
+			playerController = character->GetPlayerController();
+		if (playerController)
+		{
+			playerController->SetHUDAmmo(ammo);
+		}
+	}
+}
+
+bool AWeapon::IsEmpty()
+{
+	return (ammo <= 0);
+}
+
 void AWeapon::ShowPickupWidget(bool bShowWidget)
 {
 	if (pickupWidget)
@@ -157,6 +206,8 @@ void AWeapon::Fire(const FVector hitLocation)
 			}
 		}
 	}
+
+	UpdateAmmo();
 }
 
 
@@ -165,23 +216,25 @@ void AWeapon::DropWeapon()
 	SetWeaponState(EWeaponState::Dropped);
 	weaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	SetOwner(nullptr);
+	playerController = nullptr;
+	character = nullptr;
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ABaseCharacter* character = Cast<ABaseCharacter>(OtherActor);
-	if(character && pickupWidget)
+	ABaseCharacter* otherCharacter = Cast<ABaseCharacter>(OtherActor);
+	if(otherCharacter && pickupWidget)
 	{
-		character->SetOverlappingWeapon(this);
+		otherCharacter->SetOverlappingWeapon(this);
 	}
 }
 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	ABaseCharacter* character = Cast<ABaseCharacter>(OtherActor);
-	if (character)
+	ABaseCharacter* otherCharacter = Cast<ABaseCharacter>(OtherActor);
+	if (otherCharacter)
 	{
-		character->SetOverlappingWeapon(nullptr);
+		otherCharacter->SetOverlappingWeapon(nullptr);
 	}
 }
 

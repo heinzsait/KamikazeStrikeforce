@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "KamikazeStrikeforce/HUD/BaseHUD.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "CombatComponent.generated.h"
 
 class AWeapon;
@@ -22,11 +23,16 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(AWeapon* weapon);
+	void Reload();
 
 	UPROPERTY(Replicated)
 	bool isAiming;
 
 	FORCEINLINE FVector GetHitLocation() { return hitLocation; }
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
+
 
 protected:
 	// Called when the game starts
@@ -50,6 +56,11 @@ protected:
 	void TraceCrosshair(FHitResult& result);
 
 	void SetHUDCrosshair(float DeltaTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+
+	void HandleReload();
 
 private:	
 
@@ -88,8 +99,32 @@ private:
 
 	FTimerHandle fireTimer;
 	bool canFire = true;
+	bool CanFire();
 	void StartFireTimer();
 	void FireTimerFinished();
 
 	void DropWeapon();
+
+
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int carriedAmmo;
+
+	UPROPERTY(EditAnywhere)
+	int startingARAmmo = 100;
+
+	UPROPERTY(EditAnywhere)
+	int startingPistolAmmo = 50;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	TMap<EWeaponTypes, int> carriedAmmoMap;
+
+	void InitAmmos();
+
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState combatState;
+
+	UFUNCTION()
+	void OnRep_CombatState();
 };

@@ -18,6 +18,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRep_Owner() override;
 
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector hitLocation);
@@ -45,6 +46,8 @@ public:
 	FORCEINLINE float GetZoomFOV() { return zoomedFOV; }
 	FORCEINLINE float GetZoomSpeed() { return zoomSpeed; }
 
+	FORCEINLINE EWeaponTypes GetWeaponType() { return weaponType; }
+
 
 	UPROPERTY(EditAnywhere)
 	float fireDelay = 0.15f;
@@ -53,12 +56,18 @@ public:
 	bool isAutomatic;
 
 	void DropWeapon();
+	void UpdateHUDAmmo();
+
+	bool IsEmpty();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:	
+
+	UPROPERTY(EditAnywhere)
+	EWeaponTypes weaponType;
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* weaponMesh;
@@ -89,4 +98,19 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float zoomSpeed = 20.0f;
+
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int ammo = 20;
+
+	UPROPERTY(EditAnywhere)
+	int magCapacity = 20;
+
+	class ABasePlayerController* playerController = nullptr;
+
+	class ABaseCharacter* character = nullptr;
+
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	void UpdateAmmo();
 };

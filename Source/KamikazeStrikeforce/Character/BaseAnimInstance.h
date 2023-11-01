@@ -20,6 +20,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds); 	
 	
 private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class ABaseCharacter* character = nullptr;
 
 	UCharacterMovementComponent* characterMovement = nullptr;
@@ -89,4 +90,7 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	int deathIndexMax = 0;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool useFABRIK = true;
 };

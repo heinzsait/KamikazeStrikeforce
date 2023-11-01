@@ -18,6 +18,8 @@ public:
 	void SetHealth(float hp, float maxHP);
 	void SetScore(float score);
 	void SetDeaths(int deaths);
+	void SetAmmo(int ammo);
+	void SetCarriedAmmo(int carriedAmmo);
 
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
@@ -31,5 +33,11 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UTextBlock* deathsText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* ammoText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* carriedAmmoText;
 	
 };
