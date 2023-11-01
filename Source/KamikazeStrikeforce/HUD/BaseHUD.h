@@ -36,6 +36,7 @@ public :
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UUserWidget> characterOverlayClass;
 
+	UPROPERTY()
 	class UCharacterOverlay* characterOverlay;
 
 protected:

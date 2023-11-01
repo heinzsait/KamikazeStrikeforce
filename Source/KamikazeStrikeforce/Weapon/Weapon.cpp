@@ -33,6 +33,7 @@ AWeapon::AWeapon()
 	pickupWidget->SetupAttachment(RootComponent);
 }
 
+
 // Called when the game starts or when spawned
 void AWeapon::BeginPlay()
 {
@@ -79,10 +80,19 @@ void AWeapon::SetWeaponState(EWeaponState state)
 	case EWeaponState::Equipped:
 		ShowPickupWidget(false);
 		areaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		weaponMesh->SetSimulatePhysics(false);
+		weaponMesh->SetEnableGravity(false);
+		weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 
 	case EWeaponState::Dropped:
-
+		if (HasAuthority())
+		{
+			areaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		weaponMesh->SetSimulatePhysics(true);
+		weaponMesh->SetEnableGravity(true);
+		weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 
 	default:
@@ -100,10 +110,15 @@ void AWeapon::OnRep_WeaponState()
 
 	case EWeaponState::Equipped:
 		ShowPickupWidget(false);
+		weaponMesh->SetSimulatePhysics(false);
+		weaponMesh->SetEnableGravity(false);
+		weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 
 	case EWeaponState::Dropped:
-
+		weaponMesh->SetSimulatePhysics(true);
+		weaponMesh->SetEnableGravity(true);
+		weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 
 	default:
@@ -142,6 +157,14 @@ void AWeapon::Fire(const FVector hitLocation)
 			}
 		}
 	}
+}
+
+
+void AWeapon::DropWeapon()
+{
+	SetWeaponState(EWeaponState::Dropped);
+	weaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	SetOwner(nullptr);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

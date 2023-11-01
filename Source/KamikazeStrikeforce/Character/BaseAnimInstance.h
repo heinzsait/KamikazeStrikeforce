@@ -17,11 +17,12 @@ class KAMIKAZESTRIKEFORCE_API UBaseAnimInstance : public UAnimInstance
 public:
 
 	virtual void NativeInitializeAnimation();
-	virtual void NativeUpdateAnimation(float DeltaSeconds);
+	virtual void NativeUpdateAnimation(float DeltaSeconds); 	
 	
 private:
-	class ABaseCharacter* character;
-	UCharacterMovementComponent* characterMovement;
+	class ABaseCharacter* character = nullptr;
+
+	UCharacterMovementComponent* characterMovement = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector velocity;
@@ -79,4 +80,13 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool rotateRootBone;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool isEliminated; 
+	
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int deathIndex;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	int deathIndexMax = 0;
 };

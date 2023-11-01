@@ -53,7 +53,7 @@ protected:
 
 private:	
 
-	class ABaseCharacter* character;
+	class ABaseCharacter* character = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* equippedWeapon;
@@ -90,4 +90,6 @@ private:
 	bool canFire = true;
 	void StartFireTimer();
 	void FireTimerFinished();
+
+	void DropWeapon();
 };

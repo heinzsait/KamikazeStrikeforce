@@ -17,7 +17,16 @@ public:
 	virtual void BeginPlay() override;
 
 	void SetHUDHealth(float hp, float maxHP);
+	void SetHUDScore(float score);
+	void SetHUDDeaths(int deaths);
+
+	virtual void OnPossess(APawn* InPawn) override;
+
+protected:
 
 private:
-	class ABaseHUD* HUD;
+
+	class ABaseHUD* HUD = nullptr;
+
+	class ABaseCharacter* playerCharacter = nullptr;
 };

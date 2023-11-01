@@ -18,6 +18,8 @@ void UBaseAnimInstance::NativeInitializeAnimation()
 	{
 		characterMovement = character->GetCharacterMovement();
 	}
+
+	deathIndex = -1;
 }
 
 void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -42,6 +44,9 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		isAiming = character->IsAiming();
 
 		rotateRootBone = character->ShouldRotateRootBone();
+
+		isEliminated = character->isEliminated;
+		if (isEliminated && deathIndex == -1) deathIndex = FMath::RandRange(0, deathIndexMax - 1);
 
 		// Offset Yaw for Strafing
 		FRotator AimRotation = character->GetBaseAimRotation();

@@ -37,6 +37,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* tracerFX;
 
+	UPROPERTY()
 	class UParticleSystemComponent* tracerComp;
 
 	UPROPERTY(EditAnywhere)

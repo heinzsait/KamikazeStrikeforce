@@ -52,6 +52,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool isAutomatic;
 
+	void DropWeapon();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

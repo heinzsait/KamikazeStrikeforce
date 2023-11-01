@@ -6,9 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "CharacterOverlay.generated.h"
 
-/**
- * 
- */
+class UProgressBar;
+class UTextBlock;
+
 UCLASS()
 class KAMIKAZESTRIKEFORCE_API UCharacterOverlay : public UUserWidget
 {
@@ -16,12 +16,20 @@ class KAMIKAZESTRIKEFORCE_API UCharacterOverlay : public UUserWidget
 
 public:
 	void SetHealth(float hp, float maxHP);
+	void SetScore(float score);
+	void SetDeaths(int deaths);
 
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UProgressBar* healthBar;
+	UProgressBar* healthBar;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UTextBlock* healthText;
+	UTextBlock* healthText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* scoreText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* deathsText;
 	
 };

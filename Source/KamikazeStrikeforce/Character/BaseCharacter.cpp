@@ -4,6 +4,7 @@
 #include "BaseCharacter.h"
 #include "BaseAnimInstance.h"
 #include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
+#include "KamikazeStrikeforce/PlayerState/BasePlayerState.h"
 #include "KamikazeStrikeforce/HUD/BaseHUD.h"
 #include "KamikazeStrikeforce/GameMode/KamikazeStrikeforceGameMode.h"
 #include "Engine/LocalPlayer.h"
@@ -125,6 +126,16 @@ void ABaseCharacter::PostInitializeComponents()
 	}
 }
 
+void ABaseCharacter::PollInitializePlayerState()
+{
+	if (!basePlayerState) basePlayerState = Cast<ABasePlayerState>(GetPlayerState());
+	if (basePlayerState && !playerStateSet)
+	{
+		basePlayerState->AddScore(0.0f);
+		basePlayerState->AddDeaths(0);
+		playerStateSet = true;
+	}
+}
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
@@ -146,6 +157,8 @@ void ABaseCharacter::Tick(float DeltaTime)
 	}*/
 	if(IsLocallyControlled())
 		HideCamIfCharClose();
+
+	PollInitializePlayerState();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -500,7 +513,27 @@ bool ABaseCharacter::IsAiming()
 	return (combat && combat->isAiming);
 }
 
-FVector ABaseCharacter::GetHitLocation()
+ABaseHUD* ABaseCharacter::GetMainHUD()
+{
+	if (!mainHUD)
+	{
+		if (!playerController) 
+			playerController = Cast<ABasePlayerController>(Controller);
+
+		if(playerController)
+			mainHUD = Cast<ABaseHUD>(playerController->GetHUD());
+	}
+	return mainHUD;
+}
+
+ABasePlayerController* ABaseCharacter::GetController()
+{
+	if(!playerController) playerController = Cast<ABasePlayerController>(Controller);
+
+	return playerController; 
+}
+
+FVector ABaseCharacter::GetHitLocation() 
 {
 	 return combat->GetHitLocation(); 
 }
@@ -571,9 +604,17 @@ void ABaseCharacter::UpdatePlayerHUDHealth()
 		playerController->SetHUDHealth(health, maxHealth);
 }
 
+void ABaseCharacter::PlayEliminationMontage()
+{
+	if (animInstance && eliminationMontage)
+	{
+		animInstance->Montage_Play(eliminationMontage);
+	}
+}
 
 void ABaseCharacter::Eliminate()
 {
+	if (combat) combat->DropWeapon();
 	MulticastEliminate();
 	GetWorld()->GetTimerManager().SetTimer(eliminationTimer, this, &ABaseCharacter::EliminationFinished, eliminiationDelay);
 }
@@ -581,8 +622,7 @@ void ABaseCharacter::Eliminate()
 void ABaseCharacter::MulticastEliminate_Implementation()
 {
 	isEliminated = true;
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, FString(TEXT("play elim anim montage")));
+	//PlayEliminationMontage();
 
 	if (dissolveMaterialInstances.Num() > 0)
 	{

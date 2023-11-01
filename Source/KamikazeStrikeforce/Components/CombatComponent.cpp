@@ -36,7 +36,10 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	/*if (!character)
+	{
+		character = Cast<ABaseCharacter>(GetOwner());
+	}*/
 	if (character)
 	{
 		character->GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
@@ -55,6 +58,8 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 	if (character && character->IsLocallyControlled())
 	{
+		//if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Green, FString::Printf(TEXT("Combat Update")));
+
 		TraceCrosshair(hitResult);
 		LerpFOV(DeltaTime);
 		SetHUDCrosshair(DeltaTime);
@@ -83,9 +88,17 @@ void UCombatComponent::EquipWeapon(AWeapon* weapon)
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (equippedWeapon && character)
-	{
-		character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		character->bUseControllerRotationYaw = true;
+	{		
+		const USkeletalMeshSocket* handSocket = character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+		if (handSocket)
+		{	
+			equippedWeapon->SetWeaponState(EWeaponState::Equipped);
+			equippedWeapon->SetOwner(character);
+			handSocket->AttachActor(equippedWeapon, character->GetMesh());
+
+			character->GetCharacterMovement()->bOrientRotationToMovement = false;
+			character->bUseControllerRotationYaw = true;
+		}
 	}
 }
 
@@ -184,6 +197,15 @@ void UCombatComponent::FireTimerFinished()
 	}
 }
 
+void UCombatComponent::DropWeapon()
+{ 
+	if (equippedWeapon)
+	{
+		equippedWeapon->DropWeapon();
+		equippedWeapon = nullptr;
+	}
+}
+
 void UCombatComponent::TraceCrosshair(FHitResult& result)
 {
 	FVector2D viewPortSize;
@@ -236,6 +258,14 @@ void UCombatComponent::TraceCrosshair(FHitResult& result)
 
 void UCombatComponent::SetHUDCrosshair(float DeltaTime)
 {
+	if (!character->GetController())
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Red, FString::Printf(TEXT("Controller not valid")));
+	}
+	if (!character->GetMainHUD())
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Red, FString::Printf(TEXT("HUDs not valid")));
+	}
 	if (character && character->GetController() && character->GetMainHUD())
 	{
 		if (equippedWeapon)

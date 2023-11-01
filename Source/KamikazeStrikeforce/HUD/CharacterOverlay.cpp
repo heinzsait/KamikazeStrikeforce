@@ -14,3 +14,19 @@ void UCharacterOverlay::SetHealth(float hp, float maxHP)
 		healthText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(hp), FMath::CeilToInt(maxHP))));
 	}
 }
+
+void UCharacterOverlay::SetScore(float score)
+{
+	if (scoreText)
+	{
+		scoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), FMath::CeilToInt(score))));
+	}
+}
+
+void UCharacterOverlay::SetDeaths(int deaths)
+{
+	if (deathsText)
+	{
+		deathsText->SetText(FText::FromString(FString::Printf(TEXT("Deaths: %d"), deaths)));
+	}
+}

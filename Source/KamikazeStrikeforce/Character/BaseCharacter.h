@@ -17,7 +17,9 @@ class UInputAction;
 struct FInputActionValue;
 class UCombatComponent;
 class ABasePlayerController;
+class ABasePlayerState;
 class ABaseHUD;
+class UAnimMontage;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -116,6 +118,8 @@ protected:
 
 	void UpdatePlayerHUDHealth();
 
+	void PlayEliminationMontage();
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -128,13 +132,16 @@ public:
 
 	FORCEINLINE ETurnInPlace GetTurnInPlace() const { return turnInPlace; }
 
-	FORCEINLINE ABasePlayerController* GetController() const { return playerController; }
+	ABasePlayerController* GetController();
 
-	FORCEINLINE ABaseHUD* GetMainHUD() const { return mainHUD; }
+	ABaseHUD* GetMainHUD();
 
 	FORCEINLINE UCameraComponent* GetCamera() const { return FollowCamera; }
 
 	FORCEINLINE bool ShouldRotateRootBone() const { return rotateRootBone; }
+
+	FORCEINLINE float GetHealth() const { return health; }
+	FORCEINLINE float GetMaxHealth() const { return maxHealth; }
 
 	FVector GetHitLocation();
 
@@ -148,8 +155,14 @@ public:
 
 private:
 
-	ABasePlayerController* playerController;
-	ABaseHUD* mainHUD;
+	ABasePlayerController* playerController = nullptr;
+
+	ABasePlayerState* basePlayerState = nullptr;
+
+	ABaseHUD* mainHUD = nullptr;
+
+	void PollInitializePlayerState();
+	bool playerStateSet = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = Stats)
 	float health = 100.0f; 
@@ -178,13 +191,17 @@ private:
 	float proxyYaw;
 	float lastRepMovementUpdateTime;
 
+	UPROPERTY()
 	class UBaseAnimInstance* animInstance;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* fireMontage;
+	UAnimMontage* fireMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* hitReactMontage;
+	UAnimMontage* hitReactMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* eliminationMontage;
 
 	void HideCamIfCharClose();
 
