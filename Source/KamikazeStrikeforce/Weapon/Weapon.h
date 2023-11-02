@@ -48,6 +48,10 @@ public:
 
 	FORCEINLINE EWeaponTypes GetWeaponType() { return weaponType; }
 
+	FORCEINLINE int GetAmmo() { return ammo; }
+	FORCEINLINE int GetMagCapacity() { return magCapacity; }
+	FORCEINLINE int GetRoomInMag() { return (magCapacity - ammo); }
+
 
 	UPROPERTY(EditAnywhere)
 	float fireDelay = 0.15f;
@@ -55,10 +59,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool isAutomatic;
 
+	void AddAmmo(int ammoAmt);
 	void DropWeapon();
 	void UpdateHUDAmmo();
 
 	bool IsEmpty();
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* equipSFX;
 
 protected:
 	// Called when the game starts or when spawned

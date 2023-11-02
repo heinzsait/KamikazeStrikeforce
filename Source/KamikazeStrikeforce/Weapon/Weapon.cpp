@@ -211,6 +211,12 @@ void AWeapon::Fire(const FVector hitLocation)
 }
 
 
+void AWeapon::AddAmmo(int ammoAmt)
+{
+	ammo = FMath::Clamp(ammo + ammoAmt, 0, magCapacity);
+	UpdateHUDAmmo();
+}
+
 void AWeapon::DropWeapon()
 {
 	SetWeaponState(EWeaponState::Dropped);

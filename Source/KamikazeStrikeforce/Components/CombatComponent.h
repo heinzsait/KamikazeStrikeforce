@@ -62,6 +62,8 @@ protected:
 
 	void HandleReload();
 
+	int AmountToReload();
+
 private:	
 
 	class ABaseCharacter* character = nullptr;
@@ -104,6 +106,8 @@ private:
 	void FireTimerFinished();
 
 	void DropWeapon();
+
+	void ReloadWeaponAmmo();
 
 
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)

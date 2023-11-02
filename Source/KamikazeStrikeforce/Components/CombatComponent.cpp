@@ -97,6 +97,11 @@ void UCombatComponent::EquipWeapon(AWeapon* weapon)
 
 			handSocket->AttachActor(equippedWeapon, character->GetMesh());
 
+			if (equippedWeapon && equippedWeapon->equipSFX)
+				UGameplayStatics::PlaySoundAtLocation(this, equippedWeapon->equipSFX, character->GetActorLocation());
+
+			if (equippedWeapon && equippedWeapon->IsEmpty()) Reload();
+
 			character->GetCharacterMovement()->bOrientRotationToMovement = false;
 			character->bUseControllerRotationYaw = true;
 		}
@@ -113,6 +118,10 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		{	
 			equippedWeapon->SetWeaponState(EWeaponState::Equipped);		
 			handSocket->AttachActor(equippedWeapon, character->GetMesh());
+
+			if (equippedWeapon && equippedWeapon->equipSFX)
+				UGameplayStatics::PlaySoundAtLocation(this, equippedWeapon->equipSFX, character->GetActorLocation());
+
 			character->GetCharacterMovement()->bOrientRotationToMovement = false;
 			character->bUseControllerRotationYaw = true;
 		}
@@ -121,7 +130,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::Reload()
 {
-	if (carriedAmmo > 0 && combatState != ECombatState::Reloading)
+	if (carriedAmmo > 0 && combatState != ECombatState::Reloading && equippedWeapon && (equippedWeapon->GetRoomInMag() > 0))
 	{
 		ServerReload();
 	}
@@ -129,8 +138,27 @@ void UCombatComponent::Reload()
 
 void UCombatComponent::ServerReload_Implementation()
 {
-	combatState = ECombatState::Reloading;
-	HandleReload();
+	if (equippedWeapon)
+	{
+		combatState = ECombatState::Reloading;		
+		HandleReload();
+	}
+}
+
+void UCombatComponent::ReloadWeaponAmmo()
+{
+	if (equippedWeapon)
+	{
+		int reloadAmount = AmountToReload();
+		if (carriedAmmoMap.Contains(equippedWeapon->GetWeaponType()))
+		{
+			carriedAmmoMap[equippedWeapon->GetWeaponType()] -= reloadAmount;
+			carriedAmmo = carriedAmmoMap[equippedWeapon->GetWeaponType()];
+			if (character->GetPlayerController())
+				character->GetPlayerController()->SetHUDCarriedAmmo(carriedAmmo);
+		}
+		equippedWeapon->AddAmmo(reloadAmount);
+	}
 }
 
 
@@ -140,7 +168,22 @@ void UCombatComponent::HandleReload()
 	{
 		character->PlayReloadMontage();
 	}
-} 
+}
+int UCombatComponent::AmountToReload()
+{
+	int amt = 0;
+	if (equippedWeapon)
+	{		
+		if (carriedAmmoMap.Contains(equippedWeapon->GetWeaponType()))
+		{
+			int roomInMag = equippedWeapon->GetRoomInMag();
+			int min = FMath::Min(roomInMag, carriedAmmoMap[equippedWeapon->GetWeaponType()]);
+			amt = FMath::Clamp(roomInMag, 0, min);
+		}
+	}
+	return amt;
+}
+
 
 void UCombatComponent::OnRep_CombatState()
 {
@@ -165,8 +208,11 @@ void UCombatComponent::OnRep_CombatState()
 
 void UCombatComponent::FinishReloading()
 {
-	if(character->HasAuthority())
+	if (character->HasAuthority())
+	{
 		combatState = ECombatState::Unoccupied;
+		ReloadWeaponAmmo();
+	}
 
 	if (isFirePressed)
 		Fire();
@@ -267,6 +313,7 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	if (equippedWeapon && equippedWeapon->IsEmpty()) Reload();
 }
 
 void UCombatComponent::DropWeapon()

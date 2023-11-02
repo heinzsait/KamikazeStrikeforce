@@ -90,5 +90,9 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		turnInPlace = character->GetTurnInPlace();
 
 		useFABRIK = (character->GetCombatState() != ECombatState::Reloading);
+
+		useAimOffset = (character->GetCombatState() != ECombatState::Reloading);
+
+		transformHandRBone = (character->GetCombatState() != ECombatState::Reloading);
 	}
 }
