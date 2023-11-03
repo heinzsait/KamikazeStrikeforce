@@ -14,8 +14,13 @@ class KAMIKAZESTRIKEFORCE_API UGameInfoOverlay : public UUserWidget
 	GENERATED_BODY()
 public:
 	void SetWarmupTimer(FString time);
+
+	void SetInfoText(FString text);
 private:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UTextBlock* warmupTime;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* infoText;
 };

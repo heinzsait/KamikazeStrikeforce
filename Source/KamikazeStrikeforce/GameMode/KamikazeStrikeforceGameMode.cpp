@@ -4,6 +4,7 @@
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
 #include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
 #include "KamikazeStrikeforce/PlayerState/MainPlayerState.h"
+#include "KamikazeStrikeforce/GameState/MainGameState.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
@@ -78,10 +79,17 @@ void AKamikazeStrikeforceGameMode::PlayerEliminated(AMainCharacter* eliminatedCh
 		AMainPlayerState* attackerState = Cast<AMainPlayerState>(attackerController->PlayerState);
 		AMainPlayerState* victimState = Cast<AMainPlayerState>(victimController->PlayerState);
 
+		AMainGameState* gameState = GetGameState<AMainGameState>();
+
 		if (attackerState && attackerState != victimState)
 		{
 			attackerState->AddScore(1.0f);
 			victimState->AddDeaths(1);
+
+			if (gameState)
+			{
+				gameState->UpdateTopScore(attackerState);
+			}
 		}
 	}
 }

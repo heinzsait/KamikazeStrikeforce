@@ -20,6 +20,7 @@
 #include "Net/UnrealNetwork.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
 #include "KamikazeStrikeforce/Components/CombatComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
 
@@ -715,7 +716,6 @@ UCombatComponent* AMainCharacter::GetCombat() const
 void AMainCharacter::MulticastEliminate_Implementation()
 {
 	isEliminated = true;
-	//PlayEliminationMontage();
 
 	if (dissolveMaterialInstances.Num() > 0)
 	{
@@ -730,21 +730,21 @@ void AMainCharacter::MulticastEliminate_Implementation()
 		StartDissolve();
 	}
 
-	// Disable character movement
-	//GetCharacterMovement()->DisableMovement();
-	//GetCharacterMovement()->StopMovementImmediately();
-
 	disableGameplay = true;
+
+	if (combat)combat->FirePressed(false);
 
 	if (playerController)
 	{
-		//DisableInput(playerController);
 		playerController->SetHUDAmmo(0);
 		playerController->SetHUDCarriedAmmo(0);
 	}
+
 	// Disable collision
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 }
 
 
@@ -780,6 +780,8 @@ void AMainCharacter::UpdateDissolveMaterial(float dissolveValue)
 
 void AMainCharacter::Destroyed()
 {
-	if (combat && combat->equippedWeapon) combat->equippedWeapon->Destroy();
+	AKamikazeStrikeforceGameMode* gameMode = Cast<AKamikazeStrikeforceGameMode>(UGameplayStatics::GetGameMode(this));
+	if (combat && combat->equippedWeapon && gameMode && gameMode->GetMatchState() != MatchState::InProgress) 
+		combat->equippedWeapon->Destroy();
 	Super::Destroyed();
 }

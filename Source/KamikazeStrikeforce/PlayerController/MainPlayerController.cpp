@@ -8,6 +8,8 @@
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
 #include "KamikazeStrikeforce/Components/CombatComponent.h"
 #include "KamikazeStrikeforce/GameMode/KamikazeStrikeforceGameMode.h"
+#include "KamikazeStrikeforce/PlayerState/MainPlayerState.h"
+#include "KamikazeStrikeforce/GameState/MainGameState.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -265,6 +267,35 @@ void AMainPlayerController::HandleCooldown()
 		if (HUD->GetGameInfoOverlay())
 		{
 			HUD->GetGameInfoOverlay()->SetVisibility(ESlateVisibility::Visible);
+
+			AMainGameState* gameState = Cast<AMainGameState>(UGameplayStatics::GetGameState(this));
+			AMainPlayerState* playerState = GetPlayerState<AMainPlayerState>();
+			if (gameState && playerState)
+			{
+				auto topPlayers = gameState->topPlayers;
+				FString infoText = FString("");
+				if (topPlayers.Num() == 0)
+				{
+					infoText = FString("No winner :(");
+				}
+				else if (topPlayers.Num() == 1 && topPlayers[0] == playerState)
+				{
+					infoText = FString("You are the winner");
+				}
+				else if (topPlayers.Num() == 1)
+				{
+					infoText = FString::Printf(TEXT("%s is the winner"), *topPlayers[0]->GetPlayerName());
+				}
+				else if (topPlayers.Num() > 1)
+				{
+					infoText = FString("Winners: \n");
+					for (auto player : topPlayers)
+					{
+						infoText.Append(FString::Printf(TEXT("%s, "), *player->GetPlayerName()));
+					}
+				}
+				HUD->GetGameInfoOverlay()->SetInfoText(infoText);
+			}
 		}
 	}
 

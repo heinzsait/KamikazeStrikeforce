@@ -11,3 +11,11 @@ void UGameInfoOverlay::SetWarmupTimer(FString time)
 		warmupTime->SetText(FText::FromString(time));
 	}
 }
+
+void UGameInfoOverlay::SetInfoText(FString text)
+{
+	if (infoText)
+	{
+		infoText->SetText(FText::FromString(text));
+	}
+}

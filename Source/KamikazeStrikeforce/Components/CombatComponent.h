@@ -112,11 +112,11 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int carriedAmmo;
 
-	UPROPERTY(EditAnywhere)
-	int startingARAmmo = 100;
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingARAmmo = 200;
 
-	UPROPERTY(EditAnywhere)
-	int startingPistolAmmo = 50;
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingPistolAmmo = 100;
 
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
