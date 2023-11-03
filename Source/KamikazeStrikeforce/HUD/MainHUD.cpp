@@ -56,7 +56,7 @@ void AMainHUD::DrawCrossHair(UTexture2D* tex, FVector2D center, FVector2D spread
 void AMainHUD::AddOverlay()
 {
 	APlayerController* playerController = GetOwningPlayerController();
-	if (playerController && characterOverlayClass && playerController->IsLocalController())
+	if (playerController && characterOverlayClass)
 	{
 		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
 		characterOverlay->AddToViewport();
@@ -71,7 +71,7 @@ UCharacterOverlay* AMainHUD::GetOverlay() const
 void AMainHUD::AddGameInfoOverlay()
 {
 	APlayerController* playerController = GetOwningPlayerController();
-	if (playerController && gameInfoOverlayClass && playerController->IsLocalController())
+	if (playerController && gameInfoOverlayClass)
 	{
 		gameInfoOverlay = CreateWidget<UGameInfoOverlay>(playerController, gameInfoOverlayClass);
 		gameInfoOverlay->AddToViewport();

@@ -249,8 +249,10 @@ void AMainPlayerController::HandleMatchStarted()
 {
 	if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
 	if (HUD)
-	{
-		HUD->AddOverlay();
+	{	
+		if(HUD->GetOverlay() == nullptr)
+			HUD->AddOverlay();
+
 		if (HUD->GetGameInfoOverlay())
 		{
 			HUD->GetGameInfoOverlay()->SetVisibility(ESlateVisibility::Hidden);	
@@ -335,5 +337,9 @@ void AMainPlayerController::ClientJoin_Implementation(FName _state, float _warmu
 	if (HUD && matchState == MatchState::WaitingToStart)
 	{
 		HUD->AddGameInfoOverlay();
+	}
+	else if(!HUD)
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Failed to add GameInfoOverlay, No valid HUD")));
 	}
 }

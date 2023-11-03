@@ -643,6 +643,14 @@ void AMainCharacter::PlayReloadMontage()
 				section = FName("Rifle");
 				break;
 
+			case EWeaponTypes::RocketLauncher:
+				section = FName("Rifle");
+				break;
+
+			case EWeaponTypes::Pistol:
+				section = FName("Pistol");
+				break;
+
 			default:
 				section = FName("Rifle");
 				break;

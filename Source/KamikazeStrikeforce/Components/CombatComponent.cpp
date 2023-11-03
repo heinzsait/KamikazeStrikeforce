@@ -334,6 +334,7 @@ void UCombatComponent::OnRep_CarriedAmmo()
 void UCombatComponent::InitAmmos()
 {
 	carriedAmmoMap.Emplace(EWeaponTypes::AssaultRifle, startingARAmmo);
+	carriedAmmoMap.Emplace(EWeaponTypes::RocketLauncher, startingRocketAmmo);
 	carriedAmmoMap.Emplace(EWeaponTypes::Pistol, startingPistolAmmo);
 }
 
@@ -390,14 +391,14 @@ void UCombatComponent::TraceCrosshair(FHitResult& result)
 
 void UCombatComponent::SetHUDCrosshair(float DeltaTime)
 {
-	if (!character->GetPlayerController())
+	/*if (!character->GetPlayerController())
 	{
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Red, FString::Printf(TEXT("Controller not valid")));
 	}
 	if (!character->GetMainHUD())
 	{
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Red, FString::Printf(TEXT("HUDs not valid")));
-	}
+	}*/
 	if (character && character->GetPlayerController() && character->GetMainHUD())
 	{
 		if (equippedWeapon)
