@@ -4,24 +4,14 @@
 #include "BaseHUD.h"
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
+#include "GameInfoOverlay.h"
 
 
 void ABaseHUD::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AddOverlay();
 }
 
-void ABaseHUD::AddOverlay()
-{
-	APlayerController* playerController = GetOwningPlayerController();
-	if (playerController && characterOverlayClass && playerController->IsLocalController())
-	{
-		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
-		characterOverlay->AddToViewport();
-	}
-}
 
 void ABaseHUD::DrawHUD()
 {
@@ -63,8 +53,32 @@ void ABaseHUD::DrawCrossHair(UTexture2D* tex, FVector2D center, FVector2D spread
 	DrawTexture(tex, texDrawPoint.X, texDrawPoint.Y, texWidth, texHeight, 0.0f, 0.0f, 1.0f, 1.0f, color);
 }
 
+void ABaseHUD::AddOverlay()
+{
+	APlayerController* playerController = GetOwningPlayerController();
+	if (playerController && characterOverlayClass && playerController->IsLocalController())
+	{
+		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
+		characterOverlay->AddToViewport();
+	}
+}
 
 UCharacterOverlay* ABaseHUD::GetOverlay() const
 {
 	return characterOverlay;
+}
+
+void ABaseHUD::AddGameInfoOverlay()
+{
+	APlayerController* playerController = GetOwningPlayerController();
+	if (playerController && gameInfoOverlayClass && playerController->IsLocalController())
+	{
+		gameInfoOverlay = CreateWidget<UGameInfoOverlay>(playerController, gameInfoOverlayClass);
+		gameInfoOverlay->AddToViewport();
+	}
+}
+
+UGameInfoOverlay* ABaseHUD::GetGameInfoOverlay() const
+{
+	return gameInfoOverlay;
 }

@@ -91,8 +91,8 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		useFABRIK = (character->GetCombatState() != ECombatState::Reloading);
 
-		useAimOffset = (character->GetCombatState() != ECombatState::Reloading);
+		useAimOffset = (character->GetCombatState() != ECombatState::Reloading && !character->disableGameplay);
 
-		transformHandRBone = (character->GetCombatState() != ECombatState::Reloading);
+		transformHandRBone = (character->GetCombatState() != ECombatState::Reloading && !character->disableGameplay);
 	}
 }

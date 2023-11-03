@@ -79,6 +79,8 @@ ABaseCharacter::ABaseCharacter()
 
 	NetUpdateFrequency = 66.0f;
 	MinNetUpdateFrequency = 33.0f;
+
+	inputContextNotSet = true;
 }
 
 
@@ -89,6 +91,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME_CONDITION(ABaseCharacter, overlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABaseCharacter, health);
+	DOREPLIFETIME(ABaseCharacter, disableGameplay);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -142,7 +145,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimOffset(DeltaTime);
 	/*if (GetLocalRole() > ROLE_SimulatedProxy)
 	{
 		AimOffset(DeltaTime);
@@ -156,17 +158,50 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 		CalculateAO_Pitch();
 	}*/
+	if (!disableGameplay)
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		turnInPlace = ETurnInPlace::None;
+		bUseControllerRotationYaw = false;
+	}
+	CheckInputContext();
+
 	if(IsLocallyControlled())
 		HideCamIfCharClose();
 
 	PollInitializePlayerState();
 }
 
+
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
+void ABaseCharacter::CheckInputContext()
+{
+	if (inputContextNotSet && playerController)
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(playerController->GetLocalPlayer()))
+		{
+			if (!Subsystem->HasMappingContext(DefaultMappingContext))
+			{
+				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+				//if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Cyan, FString::Printf(TEXT("Mapping set")));
+				inputContextNotSet = false;
+			}
+			else
+				inputContextNotSet = false;
+		}
+	}
+}
+
 void ABaseCharacter::AimPressed()
 {
+	if (disableGameplay) return;
+
 	if (combat)
 	{
 		combat->SetAiming(true);
@@ -175,6 +210,8 @@ void ABaseCharacter::AimPressed()
 
 void ABaseCharacter::AimReleased()
 {
+	if (disableGameplay) return;
+
 	if (combat)
 	{
 		combat->SetAiming(false);
@@ -183,6 +220,8 @@ void ABaseCharacter::AimReleased()
 
 void ABaseCharacter::FirePressed()
 {
+	if (disableGameplay) return;
+
 	if (combat)
 	{
 		combat->FirePressed(true);
@@ -191,6 +230,8 @@ void ABaseCharacter::FirePressed()
 
 void ABaseCharacter::FireReleased()
 {
+	if (disableGameplay) return;
+
 	if (combat)
 	{
 		combat->FirePressed(false);
@@ -352,8 +393,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	{
 
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ABaseCharacter::JumpPressed);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABaseCharacter::JumpReleased);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Move);
@@ -364,9 +405,6 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABaseCharacter::EquipPressed);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABaseCharacter::CrouchPressed);
 
-
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ABaseCharacter::AimPressed);
-		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ABaseCharacter::AimReleased);
 
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ABaseCharacter::AimPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ABaseCharacter::AimReleased);
@@ -384,6 +422,8 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::Move(const FInputActionValue& Value)
 {
+	if (disableGameplay) return;
+
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -418,8 +458,22 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void ABaseCharacter::JumpPressed()
+{
+	if (disableGameplay) return;
+	Jump();
+}
+
+void ABaseCharacter::JumpReleased()
+{
+	if (disableGameplay) return;
+	StopJumping();
+}
+
 void ABaseCharacter::EquipPressed()
 {
+	if (disableGameplay) return;
+
 	if (combat && overlappingWeapon)
 	{
 		if (HasAuthority())
@@ -442,6 +496,8 @@ void ABaseCharacter::ServerEquipPressed_Implementation()
 
 void ABaseCharacter::CrouchPressed()
 {
+	if (disableGameplay) return;
+
 	if (!bIsCrouched)
 		Crouch();
 	else
@@ -451,6 +507,8 @@ void ABaseCharacter::CrouchPressed()
 
 void ABaseCharacter::ReloadPressed()
 {
+	if (disableGameplay) return;
+
 	if (combat) combat->Reload();
 }
 
@@ -673,11 +731,14 @@ void ABaseCharacter::MulticastEliminate_Implementation()
 	}
 
 	// Disable character movement
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->StopMovementImmediately();
+	//GetCharacterMovement()->DisableMovement();
+	//GetCharacterMovement()->StopMovementImmediately();
+
+	disableGameplay = true;
+
 	if (playerController)
 	{
-		DisableInput(playerController);
+		//DisableInput(playerController);
 		playerController->SetHUDAmmo(0);
 		playerController->SetHUDCarriedAmmo(0);
 	}
@@ -715,4 +776,10 @@ void ABaseCharacter::UpdateDissolveMaterial(float dissolveValue)
 			dynamicDissolveMaterialInstances[i]->SetScalarParameterValue(TEXT("Dissolve"), dissolveValue);
 		}
 	}
+}
+
+void ABaseCharacter::Destroyed()
+{
+	if (combat && combat->equippedWeapon) combat->equippedWeapon->Destroy();
+	Super::Destroyed();
 }

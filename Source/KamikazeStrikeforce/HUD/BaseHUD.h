@@ -38,10 +38,19 @@ public :
 
 	class UCharacterOverlay* GetOverlay() const;
 
+	void AddOverlay();
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> gameInfoOverlayClass;
+
+	class UGameInfoOverlay* GetGameInfoOverlay() const;
+
+	void AddGameInfoOverlay();
+
 protected:
 
 	virtual void BeginPlay() override;
-	void AddOverlay();
 
 private:
 
@@ -51,5 +60,6 @@ private:
 	float crossHairSpreadMax = 16.0f;
 
 	UCharacterOverlay* characterOverlay = nullptr;
+	UGameInfoOverlay* gameInfoOverlay = nullptr;
 
 };

@@ -79,6 +79,11 @@ public:
 	ABaseCharacter();
 	virtual void Tick(float DeltaTime) override;
 
+	void CheckInputContext();
+
+	UPROPERTY(Replicated)
+	bool disableGameplay = false;
+
 protected:
 
 	/** Called for movement input */
@@ -86,6 +91,9 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void JumpPressed();
+	void JumpReleased();
 
 	void EquipPressed();
 	void CrouchPressed();
@@ -118,6 +126,8 @@ protected:
 	virtual void BeginPlay();
 
 	virtual void PostInitializeComponents() override;
+
+	virtual void Destroyed() override;
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
@@ -171,6 +181,8 @@ private:
 	ABasePlayerState* basePlayerState = nullptr;
 
 	ABaseHUD* mainHUD = nullptr;
+
+	bool inputContextNotSet = false;
 
 	void PollInitializePlayerState();
 	bool playerStateSet = false;

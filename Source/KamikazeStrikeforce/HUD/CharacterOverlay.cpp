@@ -46,3 +46,11 @@ void UCharacterOverlay::SetCarriedAmmo(int carriedAmmo)
 		carriedAmmoText->SetText(FText::FromString(FString::Printf(TEXT("/ %d"), carriedAmmo)));
 	}
 }
+
+void UCharacterOverlay::SetMatchTimer(FString time)
+{
+	if (matchTimerText)
+	{
+		matchTimerText->SetText(FText::FromString(time));
+	}
+}

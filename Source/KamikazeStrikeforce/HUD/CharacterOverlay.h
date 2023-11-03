@@ -20,6 +20,7 @@ public:
 	void SetDeaths(int deaths);
 	void SetAmmo(int ammo);
 	void SetCarriedAmmo(int carriedAmmo);
+	void SetMatchTimer(FString time);
 
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
@@ -39,5 +40,8 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UTextBlock* carriedAmmoText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* matchTimerText;
 	
 };

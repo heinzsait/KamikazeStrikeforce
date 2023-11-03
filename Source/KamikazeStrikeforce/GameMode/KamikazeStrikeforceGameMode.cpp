@@ -8,13 +8,64 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 AKamikazeStrikeforceGameMode::AKamikazeStrikeforceGameMode()
 {
-	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Blueprints/Characters/BP_BaseCharacter"));
-	if (PlayerPawnBPClass.Class != NULL)
+	bDelayedStart = true;
+}
+
+void AKamikazeStrikeforceGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	levelStartTime = GetWorld()->GetTimeSeconds();
+}
+
+void AKamikazeStrikeforceGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	for (FConstPlayerControllerIterator it = GetWorld()->GetPlayerControllerIterator(); it; it++)
 	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
+		ABasePlayerController* playerCont = Cast<ABasePlayerController>(*it);
+		if (playerCont)
+		{
+			playerCont->OnMatchStateSet(MatchState);	
+		}
+	}
+}
+
+void AKamikazeStrikeforceGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		countDownTime = warmupTime - GetWorld()->GetTimeSeconds() + levelStartTime;
+		if (countDownTime <= 0)
+		{
+			StartMatch();
+		}
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		countDownTime = matchTime + warmupTime - GetWorld()->GetTimeSeconds() + levelStartTime;
+		if (countDownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
+		}
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		countDownTime = cooldownTime + matchTime + warmupTime - GetWorld()->GetTimeSeconds() + levelStartTime;
+		if (countDownTime <= 0.f)
+		{
+			RestartGame();
+		}
 	}
 }
 
