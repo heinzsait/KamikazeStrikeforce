@@ -3,8 +3,8 @@
 
 #include "CombatComponent.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
-#include "KamikazeStrikeforce/Character/BaseCharacter.h"
-#include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
+#include "KamikazeStrikeforce/Character/MainCharacter.h"
+#include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -41,7 +41,7 @@ void UCombatComponent::BeginPlay()
 	Super::BeginPlay();
 	/*if (!character)
 	{
-		character = Cast<ABaseCharacter>(GetOwner());
+		character = Cast<AMainCharacter>(GetOwner());
 	}*/
 	if (character)
 	{

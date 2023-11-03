@@ -7,7 +7,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "KamikazeStrikeforce/Character/BaseCharacter.h"
+#include "KamikazeStrikeforce/Character/MainCharacter.h"
 
 
 // Sets default values
@@ -49,7 +49,7 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	/*ABaseCharacter* playerChar = Cast<ABaseCharacter>(OtherActor);
+	/*AMainCharacter* playerChar = Cast<AMainCharacter>(OtherActor);
 	if (playerChar)
 	{
 		playerChar->MulticastHitReact();

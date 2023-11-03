@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "KamikazeStrikeforce/HUD/BaseHUD.h"
+#include "KamikazeStrikeforce/HUD/MainHUD.h"
 #include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "CombatComponent.generated.h"
 
@@ -18,7 +18,7 @@ class KAMIKAZESTRIKEFORCE_API UCombatComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UCombatComponent();
-	friend class ABaseCharacter;
+	friend class AMainCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -65,7 +65,7 @@ protected:
 
 private:	
 
-	class ABaseCharacter* character = nullptr;
+	class AMainCharacter* character = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* equippedWeapon;

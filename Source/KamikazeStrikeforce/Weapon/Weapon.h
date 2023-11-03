@@ -113,9 +113,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	int magCapacity = 20;
 
-	class ABasePlayerController* playerController = nullptr;
+	class AMainPlayerController* playerController = nullptr;
 
-	class ABaseCharacter* character = nullptr;
+	class AMainCharacter* character = nullptr;
 
 	UFUNCTION()
 	void OnRep_Ammo();

@@ -1,9 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "KamikazeStrikeforceGameMode.h"
-#include "KamikazeStrikeforce/Character/BaseCharacter.h"
-#include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
-#include "KamikazeStrikeforce/PlayerState/BasePlayerState.h"
+#include "KamikazeStrikeforce/Character/MainCharacter.h"
+#include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
+#include "KamikazeStrikeforce/PlayerState/MainPlayerState.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
@@ -31,7 +31,7 @@ void AKamikazeStrikeforceGameMode::OnMatchStateSet()
 
 	for (FConstPlayerControllerIterator it = GetWorld()->GetPlayerControllerIterator(); it; it++)
 	{
-		ABasePlayerController* playerCont = Cast<ABasePlayerController>(*it);
+		AMainPlayerController* playerCont = Cast<AMainPlayerController>(*it);
 		if (playerCont)
 		{
 			playerCont->OnMatchStateSet(MatchState);	
@@ -69,14 +69,14 @@ void AKamikazeStrikeforceGameMode::Tick(float DeltaTime)
 	}
 }
 
-void AKamikazeStrikeforceGameMode::PlayerEliminated(ABaseCharacter* eliminatedCharacter, ABasePlayerController* victimController, ABasePlayerController* attackerController)
+void AKamikazeStrikeforceGameMode::PlayerEliminated(AMainCharacter* eliminatedCharacter, AMainPlayerController* victimController, AMainPlayerController* attackerController)
 {
 	if (eliminatedCharacter && victimController && attackerController)
 	{
 		eliminatedCharacter->Eliminate();
 
-		ABasePlayerState* attackerState = Cast<ABasePlayerState>(attackerController->PlayerState);
-		ABasePlayerState* victimState = Cast<ABasePlayerState>(victimController->PlayerState);
+		AMainPlayerState* attackerState = Cast<AMainPlayerState>(attackerController->PlayerState);
+		AMainPlayerState* victimState = Cast<AMainPlayerState>(victimController->PlayerState);
 
 		if (attackerState && attackerState != victimState)
 		{
@@ -86,7 +86,7 @@ void AKamikazeStrikeforceGameMode::PlayerEliminated(ABaseCharacter* eliminatedCh
 	}
 }
 
-void AKamikazeStrikeforceGameMode::RequestRespawn(ABaseCharacter* eliminatedCharacter, ABasePlayerController* eliminatedController)
+void AKamikazeStrikeforceGameMode::RequestRespawn(AMainCharacter* eliminatedCharacter, AMainPlayerController* eliminatedController)
 {
 	if (eliminatedCharacter && eliminatedController)
 	{

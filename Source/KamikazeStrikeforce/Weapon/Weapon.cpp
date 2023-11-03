@@ -5,8 +5,8 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Animation/AnimationAsset.h"
-#include "KamikazeStrikeforce/Character/BaseCharacter.h"
-#include "KamikazeStrikeforce/PlayerController/BasePlayerController.h"
+#include "KamikazeStrikeforce/Character/MainCharacter.h"
+#include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "BulletShell.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -159,7 +159,7 @@ void AWeapon::UpdateAmmo()
 void AWeapon::UpdateHUDAmmo()
 {
 	if (!character)
-		character = Cast<ABaseCharacter>(GetOwner());
+		character = Cast<AMainCharacter>(GetOwner());
 	if (character)
 	{
 		if (!playerController)
@@ -228,7 +228,7 @@ void AWeapon::DropWeapon()
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ABaseCharacter* otherCharacter = Cast<ABaseCharacter>(OtherActor);
+	AMainCharacter* otherCharacter = Cast<AMainCharacter>(OtherActor);
 	if(otherCharacter && pickupWidget)
 	{
 		otherCharacter->SetOverlappingWeapon(this);
@@ -237,7 +237,7 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	ABaseCharacter* otherCharacter = Cast<ABaseCharacter>(OtherActor);
+	AMainCharacter* otherCharacter = Cast<AMainCharacter>(OtherActor);
 	if (otherCharacter)
 	{
 		otherCharacter->SetOverlappingWeapon(nullptr);
