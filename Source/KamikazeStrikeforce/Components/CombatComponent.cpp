@@ -336,6 +336,10 @@ void UCombatComponent::InitAmmos()
 	carriedAmmoMap.Emplace(EWeaponTypes::AssaultRifle, startingARAmmo);
 	carriedAmmoMap.Emplace(EWeaponTypes::RocketLauncher, startingRocketAmmo);
 	carriedAmmoMap.Emplace(EWeaponTypes::Pistol, startingPistolAmmo);
+	carriedAmmoMap.Emplace(EWeaponTypes::SMG, startingSMGAmmo);
+	carriedAmmoMap.Emplace(EWeaponTypes::Shotgun, startingShotgunAmmo);
+	carriedAmmoMap.Emplace(EWeaponTypes::Sniper, startingSniperAmmo);
+	carriedAmmoMap.Emplace(EWeaponTypes::GrenadeLauncher, startingGrenadeLauncherAmmo);
 }
 
 

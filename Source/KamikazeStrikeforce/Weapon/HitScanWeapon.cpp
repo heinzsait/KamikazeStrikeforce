@@ -24,7 +24,9 @@ void AHitScanWeapon::Fire(const FVector hitLocation)
 		UWorld* world = GetWorld();
 		if (world)
 		{
-			world->LineTraceSingleByChannel(result, start, end, ECC_Visibility);
+			FCollisionQueryParams queryParams;
+			queryParams.AddIgnoredActor(GetOwner());
+			world->LineTraceSingleByChannel(result, start, end, ECC_Visibility, queryParams);
 			FVector beamEnd = end;
 			if (result.bBlockingHit)
 			{

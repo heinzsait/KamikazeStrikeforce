@@ -24,6 +24,7 @@ AWeapon::AWeapon()
 
 	weaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	areaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
@@ -100,6 +101,12 @@ void AWeapon::SetWeaponState(EWeaponState state)
 		weaponMesh->SetSimulatePhysics(false);
 		weaponMesh->SetEnableGravity(false);
 		weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (weaponType == EWeaponTypes::SMG)
+		{			
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			weaponMesh->SetEnableGravity(true);
+			weaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
 		break;
 
 	case EWeaponState::Dropped:
@@ -110,6 +117,10 @@ void AWeapon::SetWeaponState(EWeaponState state)
 		weaponMesh->SetSimulatePhysics(true);
 		weaponMesh->SetEnableGravity(true);
 		weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		weaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 		break;
 
 	default:
@@ -130,12 +141,22 @@ void AWeapon::OnRep_WeaponState()
 		weaponMesh->SetSimulatePhysics(false);
 		weaponMesh->SetEnableGravity(false);
 		weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (weaponType == EWeaponTypes::SMG)
+		{
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			weaponMesh->SetEnableGravity(true);
+			weaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
 		break;
 
 	case EWeaponState::Dropped:
 		weaponMesh->SetSimulatePhysics(true);
 		weaponMesh->SetEnableGravity(true);
 		weaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		weaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		weaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 		break;
 
 	default:

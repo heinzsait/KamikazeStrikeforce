@@ -121,6 +121,19 @@ private:
 	UPROPERTY(EditAnywhere, Category = Ammo)
 	int startingRocketAmmo = 10;
 
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingSMGAmmo = 100;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingShotgunAmmo = 50;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingSniperAmmo = 50;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int startingGrenadeLauncherAmmo = 10;
+	
+
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 

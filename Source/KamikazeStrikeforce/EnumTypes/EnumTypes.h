@@ -16,7 +16,10 @@ enum class EWeaponTypes : uint8
 	AssaultRifle UMETA(DisplayName = "AssaultRifle"),
 	RocketLauncher UMETA(DisplayName = "RocketLauncher"),
 	Pistol UMETA(DisplayName = "Pistol"),
+	SMG UMETA(DisplayName = "SMG"),
 	Shotgun UMETA(DisplayName = "Shotgun"),
+	Sniper UMETA(DisplayName = "Sniper"),
+	GrenadeLauncher UMETA(DisplayName = "GrenadeLauncher"),
 
 	MAX UMETA(DisplayName = "DefaultMAX")
 };
