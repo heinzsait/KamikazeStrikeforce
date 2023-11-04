@@ -45,6 +45,7 @@ public:
 
 	FORCEINLINE float GetZoomFOV() { return zoomedFOV; }
 	FORCEINLINE float GetZoomSpeed() { return zoomSpeed; }
+	FORCEINLINE float GetAimSensitivity() { return aimSensitivity; }
 
 	FORCEINLINE EWeaponTypes GetWeaponType() { return weaponType; }
 
@@ -106,6 +107,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float zoomSpeed = 20.0f;
+
+	UPROPERTY(EditAnywhere)
+	float aimSensitivity = 1.0f;
 
 	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
 	int ammo = 20;

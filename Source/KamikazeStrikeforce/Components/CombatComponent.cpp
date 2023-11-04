@@ -256,6 +256,9 @@ void UCombatComponent::SetAiming(bool _isAiming)
 	if (character)
 	{
 		character->GetCharacterMovement()->MaxWalkSpeed = isAiming ? aimWalkSpeed : baseWalkSpeed;
+
+		if (equippedWeapon && equippedWeapon->GetWeaponType() == EWeaponTypes::Sniper && character->IsLocallyControlled())
+			character->ShowSniperScope(_isAiming);
 	}
 }
 

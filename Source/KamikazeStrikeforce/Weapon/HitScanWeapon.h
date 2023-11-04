@@ -17,11 +17,12 @@ public:
 	virtual void Fire(const FVector hitLocation) override;
 
 protected:
+
 	UPROPERTY(EditAnywhere)
 	float damage = 20.0f;
 
-private:
-
+	FVector TraceEndScatter(const FVector& start, const FVector& hitTarget);
+	
 	UPROPERTY(EditAnywhere)
 	FName spawnSocketName = FName("MuzzleFlash");
 
@@ -36,4 +37,15 @@ private:
 
 	UPROPERTY()
 	class UParticleSystemComponent* beamFXComp;
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	float distToSphere = 800.0f;
+
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	float sphereRadius = 75.0f;
+
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	bool useScatter = false;
 };

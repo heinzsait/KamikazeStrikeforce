@@ -84,6 +84,9 @@ public:
 	UPROPERTY(Replicated)
 	bool disableGameplay = false;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScope(bool show);
+
 protected:
 
 	/** Called for movement input */

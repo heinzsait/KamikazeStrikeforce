@@ -199,6 +199,8 @@ void AMainCharacter::CheckInputContext()
 	}
 }
 
+
+
 void AMainCharacter::AimPressed()
 {
 	if (disableGameplay) return;
@@ -453,9 +455,13 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
+		float aimSensitivity = 1.0f;
+		if (IsAiming() && combat && combat->equippedWeapon)
+			aimSensitivity = combat->equippedWeapon->GetAimSensitivity();
+		
 		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput(LookAxisVector.X * aimSensitivity);
+		AddControllerPitchInput(LookAxisVector.Y * aimSensitivity);
 	}
 }
 
@@ -627,6 +633,8 @@ void AMainCharacter::PlayFireMontage(bool isAiming)
 	{
 		animInstance->Montage_Play(fireMontage);
 		FName section = isAiming ? FName("FireAim") : FName("FireHip");
+		if(combat && combat->equippedWeapon && combat->equippedWeapon->GetWeaponType() == EWeaponTypes::Shotgun)
+			section = isAiming ? FName("ShotgunAim") : FName("ShotgunHip");
 		animInstance->Montage_JumpToSection(section);
 	}
 }
@@ -649,6 +657,14 @@ void AMainCharacter::PlayReloadMontage()
 
 			case EWeaponTypes::Pistol:
 				section = FName("Pistol");
+				break;
+
+			case EWeaponTypes::SMG:
+				section = FName("Pistol");
+				break;
+
+			case EWeaponTypes::Shotgun:
+				section = FName("Shotgun");
 				break;
 
 			default:
@@ -753,6 +769,11 @@ void AMainCharacter::MulticastEliminate_Implementation()
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
+
+	if (IsLocallyControlled() && combat && combat->equippedWeapon && combat->equippedWeapon->GetWeaponType() == EWeaponTypes::Sniper)
+	{
+		ShowSniperScope(false);
+	}
 }
 
 
