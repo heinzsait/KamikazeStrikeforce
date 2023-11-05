@@ -34,7 +34,7 @@ void AMainPlayerState::SetScoreHUD()
 	if (!character) character = Cast<AMainCharacter>(GetPawn());
 	if (character)
 	{
-		if (!playerController) playerController = Cast<AMainPlayerController>(character->GetController());
+		if (!playerController && character->GetController()) playerController = Cast<AMainPlayerController>(character->GetController());
 		if (playerController)
 		{
 			playerController->SetHUDScore(GetScore());

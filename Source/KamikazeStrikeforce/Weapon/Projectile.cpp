@@ -3,9 +3,10 @@
 
 #include "Projectile.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
 
@@ -27,8 +28,6 @@ AProjectile::AProjectile()
 	collisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	collisionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
-	projectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(FName("ProjectileMovementComponent"));
-	projectileMovementComponent->bRotationFollowsVelocity = true;
 }
 
 // Called when the game starts or when spawned
@@ -47,13 +46,24 @@ void AProjectile::BeginPlay()
 	}
 }
 
+void AProjectile::SpawnTrailSystem()
+{
+	if (trailFX)
+		trailFXComp = UNiagaraFunctionLibrary::SpawnSystemAttached(trailFX, RootComponent, FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+}
+
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(destroyTimer, this, &AProjectile::DestroyTimerFinished, destroyTime);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	/*AMainCharacter* playerChar = Cast<AMainCharacter>(OtherActor);
-	if (playerChar)
-	{
-		playerChar->MulticastHitReact();
-	}*/
 	Destroy();
 }
 

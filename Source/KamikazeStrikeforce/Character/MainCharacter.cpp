@@ -693,6 +693,8 @@ void AMainCharacter::OnRep_Health()
 
 void AMainCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
+	if (isEliminated) return;
+
 	health = FMath::Clamp(health - Damage, 0.0f, maxHealth);
 	PlayHitReactMontage();
 	UpdatePlayerHUDHealth();

@@ -20,25 +20,23 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* projectileMesh;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* collisionBox;
+
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
 
 	UPROPERTY(EditAnywhere)
 	float damage = 10.0f;
 
-private:	
-	
 	UPROPERTY(EditAnywhere)
-	class UBoxComponent* collisionBox;
-
-	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* projectileMovementComponent;
+	float innerRadius = 200.0f;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* tracerFX;
-
-	UPROPERTY()
-	class UParticleSystemComponent* tracerComp;
+	float outerRadius = 500.0f;
 
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* impactFX;
@@ -46,4 +44,29 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundBase* impactSFX;
 
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* projectileMovementComponent;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* trailFX;
+
+	UPROPERTY()
+	class UNiagaraComponent* trailFXComp;
+
+	void SpawnTrailSystem();
+
+	void StartDestroyTimer();
+	void DestroyTimerFinished();
+private:	
+
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* tracerFX;
+
+	UPROPERTY()
+	class UParticleSystemComponent* tracerComp;
+
+	FTimerHandle destroyTimer;
+
+	UPROPERTY(EditAnywhere)
+	float destroyTime = 3.0f;
 };

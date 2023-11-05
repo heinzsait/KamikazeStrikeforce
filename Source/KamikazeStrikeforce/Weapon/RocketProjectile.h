@@ -15,17 +15,24 @@ class KAMIKAZESTRIKEFORCE_API ARocketProjectile : public AProjectile
 	GENERATED_BODY()
 public:
 	ARocketProjectile();
+	virtual void Destroyed() override;
 
 protected:
+
+	virtual void BeginPlay() override;
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+	
+	UPROPERTY(EditAnywhere)
+	USoundBase* projectileLoopSFX;
+
+	UPROPERTY()
+	UAudioComponent* projectileLoopComp;
+
+	UPROPERTY(EditAnywhere)
+	USoundAttenuation* projectileLoopAttenuation;
 
 private:
-	UPROPERTY(EditAnywhere)
-	float innerRadius = 200.0f;
 
-	UPROPERTY(EditAnywhere)
-	float outerRadius = 500.0f;
-
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* rocketMesh;
+	UPROPERTY(VisibleAnywhere)
+	class URocketMovementComponent* rocketMovementComponent;
 };
