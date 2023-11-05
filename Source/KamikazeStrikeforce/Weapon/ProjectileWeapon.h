@@ -20,7 +20,4 @@ public:
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProjectile> projectileClass;
-
-	UPROPERTY(EditAnywhere)
-	FName spawnSocketName = FName("MuzzleFlash");
 };

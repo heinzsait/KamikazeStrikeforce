@@ -8,6 +8,7 @@
 
 class UProgressBar;
 class UTextBlock;
+class UImage;
 
 UCLASS()
 class KAMIKAZESTRIKEFORCE_API UCharacterOverlay : public UUserWidget
@@ -21,6 +22,12 @@ public:
 	void SetAmmo(int ammo);
 	void SetCarriedAmmo(int carriedAmmo);
 	void SetMatchTimer(FString time);
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UImage* highPingImg;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* highPingAnim;
 
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))

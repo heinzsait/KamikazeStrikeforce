@@ -6,12 +6,10 @@
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 
 void AHitScanWeapon::Fire(const FVector hitLocation)
 {
-	Super::Fire(hitLocation);
-		
+	Super::Fire(hitLocation);		
 	
 	auto spawnSocket = GetWeaponMesh()->GetSocketByName(spawnSocketName);
 	if (spawnSocket)
@@ -19,7 +17,7 @@ void AHitScanWeapon::Fire(const FVector hitLocation)
 		FTransform socketTransform = spawnSocket->GetSocketTransform(GetWeaponMesh());
 
 		FVector start = socketTransform.GetLocation();
-		FVector end = useScatter ? TraceEndScatter(start, hitLocation) : (start + (hitLocation - start) * 1.25f);
+		FVector end = (start + (hitLocation - start) * 1.25f);
 
 		FHitResult result;
 		UWorld* world = GetWorld();
@@ -65,13 +63,3 @@ void AHitScanWeapon::Fire(const FVector hitLocation)
 	}	
 }
 
-FVector AHitScanWeapon::TraceEndScatter(const FVector& start, const FVector& hitTarget)
-{
-	FVector ToTargetNormalized = (hitTarget - start).GetSafeNormal();
-	FVector SphereCenter = start + ToTargetNormalized * distToSphere;
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, sphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-	FVector ToEndLoc = EndLoc - start;
-
-	return FVector(start + ToEndLoc * 100000 / ToEndLoc.Size());
-}

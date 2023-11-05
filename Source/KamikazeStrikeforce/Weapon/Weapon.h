@@ -69,11 +69,35 @@ public:
 	UPROPERTY(EditAnywhere)
 	USoundBase* equipSFX;
 
+	UPROPERTY(EditAnywhere)
+	EWeaponFireType fireType;
+
+	FVector TraceEndScatter(const FVector& hitTarget);
+
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	bool useScatter = false;
+
+	UPROPERTY(EditAnywhere)
+	FName bulletShellSpawnSocketName = FName("AmmoEject");
+
+	UPROPERTY(EditAnywhere)
+	FName spawnSocketName = FName("MuzzleFlash");
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	float distToSphere = 800.0f;
+
+	UPROPERTY(EditAnywhere, Category = Scatter)
+	float sphereRadius = 75.0f;
+
 private:	
+
+	class AMainPlayerController* playerController = nullptr;
+
+	class AMainCharacter* character = nullptr;
 
 	UPROPERTY(EditAnywhere)
 	EWeaponTypes weaponType;
@@ -100,9 +124,6 @@ private:
 	TSubclassOf<class ABulletShell> bulletShellClass;
 
 	UPROPERTY(EditAnywhere)
-	FName bulletShellSpawnSocketName = FName("AmmoEject");
-
-	UPROPERTY(EditAnywhere)
 	float zoomedFOV = 30.0f;
 
 	UPROPERTY(EditAnywhere)
@@ -111,18 +132,18 @@ private:
 	UPROPERTY(EditAnywhere)
 	float aimSensitivity = 1.0f;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	UPROPERTY(EditAnywhere)
 	int ammo = 20;
+	int ammoSequence = 0;
 
 	UPROPERTY(EditAnywhere)
 	int magCapacity = 20;
 
-	class AMainPlayerController* playerController = nullptr;
-
-	class AMainCharacter* character = nullptr;
-
-	UFUNCTION()
-	void OnRep_Ammo();
-
 	void UpdateAmmo();
+
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int serverAmmo);
+
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int ammoToAdd);
 };

@@ -18,6 +18,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Tick(float DeltaTime) override;
 
+
 	void CheckTimeSync(float DeltaTime);
 
 	void SetHUDHealth(float hp, float maxHP);
@@ -56,6 +57,11 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float timeSyncInterval = 5.0f;
 	float timeSyncRunningTime = 0.0f;
+
+	void HighPingWarning();
+	void StopHighPingWarning();
+	void CheckPing(float DeltaTime);
+
 private:
 
 	class AMainHUD* HUD = nullptr;
@@ -77,4 +83,18 @@ private:
 
 	UFUNCTION(Client, Reliable)
 	void ClientJoin(FName _state, float _warmupTime, float _matchTime, float _startTtime, float _cooldownTime);
+
+	UPROPERTY(EditAnywhere)
+	float highPingRunningTime = 0;
+
+	UPROPERTY(EditAnywhere)
+	float highPingDuration = 5.0f;
+
+	UPROPERTY(EditAnywhere)
+	float checkPingInterval = 20.0f;
+
+	UPROPERTY(EditAnywhere)
+	float highPingThreshold = 50.0f;
+
+	float highPingAnimRunningTime = 0;
 };

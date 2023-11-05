@@ -3,6 +3,7 @@
 
 #include "CombatComponent.h"
 #include "KamikazeStrikeforce/Weapon/Weapon.h"
+#include "KamikazeStrikeforce/Weapon/Shotgun.h"
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
 #include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -48,12 +49,12 @@ void UCombatComponent::BeginPlay()
 		character->GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 		defaultFOV = character->GetCamera()->FieldOfView;
 		currentFOV = character->GetCamera()->FieldOfView;
+
+		if(character->HasAuthority())
+			InitAmmos();
 	}	
 
 	canFire = true;
-
-	if(character->HasAuthority())
-		InitAmmos();
 }
 
 
@@ -130,18 +131,22 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::Reload()
 {
-	if (carriedAmmo > 0 && combatState != ECombatState::Reloading && equippedWeapon && (equippedWeapon->GetRoomInMag() > 0))
+	if (carriedAmmo > 0 && combatState != ECombatState::Reloading && equippedWeapon && (equippedWeapon->GetRoomInMag() > 0) && !isLocallyReloading)
 	{
 		ServerReload();
+		HandleReload();
+		isLocallyReloading = true;
 	}
 }
+
 
 void UCombatComponent::ServerReload_Implementation()
 {
 	if (equippedWeapon)
 	{
-		combatState = ECombatState::Reloading;		
-		HandleReload();
+		combatState = ECombatState::Reloading;	
+		if(character && !character->IsLocallyControlled())
+			HandleReload();
 	}
 }
 
@@ -195,7 +200,8 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 
 	case ECombatState::Reloading:
-		HandleReload();
+		if(character && !character->IsLocallyControlled())
+			HandleReload();
 		break;
 
 	case ECombatState::MAX:
@@ -208,10 +214,14 @@ void UCombatComponent::OnRep_CombatState()
 
 void UCombatComponent::FinishReloading()
 {
-	if (character->HasAuthority())
+	if (character)
 	{
-		combatState = ECombatState::Unoccupied;
-		ReloadWeaponAmmo();
+		isLocallyReloading = false;
+		if (character->HasAuthority())
+		{
+			combatState = ECombatState::Unoccupied;
+			ReloadWeaponAmmo();
+		}
 	}
 
 	if (isFirePressed)
@@ -259,7 +269,16 @@ void UCombatComponent::SetAiming(bool _isAiming)
 
 		if (equippedWeapon && equippedWeapon->GetWeaponType() == EWeaponTypes::Sniper && character->IsLocallyControlled())
 			character->ShowSniperScope(_isAiming);
+
+		if (character->IsLocallyControlled()) isAimPressed = _isAiming;
 	}
+}
+
+
+void UCombatComponent::OnRep_Aiming()
+{
+	if (character && character->IsLocallyControlled())
+		isAiming = isAimPressed;
 }
 
 void UCombatComponent::FirePressed(bool isPressed)
@@ -272,18 +291,81 @@ void UCombatComponent::FirePressed(bool isPressed)
 
 void UCombatComponent::Fire()
 {
+
 	if (CanFire())
 	{
-		ServerFire(hitLocation);
+		canFire = false;
+		
 		if (equippedWeapon)
+		{
 			crosshairShootFactor = 0.75f;
+			switch (equippedWeapon->fireType)
+			{
+			case EWeaponFireType::Projectile:
+				FireProjectile();
+				break;
+
+			case EWeaponFireType::HitScan:
+				FireHitScan();
+				break;
+
+			case EWeaponFireType::Shotgun:
+				FireShotgun();
+				break;
+			default:
+				break;
+			}
+
+		}
 		StartFireTimer();
+	}
+}
+
+void UCombatComponent::FireHitScan()
+{
+	if (equippedWeapon)
+	{
+		hitLocation = equippedWeapon->useScatter ? equippedWeapon->TraceEndScatter(hitLocation) : hitLocation;
+		if(character && !character->HasAuthority())
+			LocalFire(hitLocation);
+		ServerFire(hitLocation);
+	}
+}
+
+void UCombatComponent::FireProjectile()
+{
+	if (equippedWeapon)
+	{
+		hitLocation = equippedWeapon->useScatter ? equippedWeapon->TraceEndScatter(hitLocation) : hitLocation;
+		if (character && !character->HasAuthority())
+			LocalFire(hitLocation);
+		ServerFire(hitLocation);
+	}
+}
+
+void UCombatComponent::FireShotgun()
+{
+	if (equippedWeapon)
+	{
+		AShotgun* shotgun = Cast<AShotgun>(equippedWeapon);
+		if (shotgun)
+		{
+			TArray<FVector_NetQuantize> hitTargets;
+			shotgun->ShotgunTraceEndScatter(hitLocation, hitTargets);
+
+			if (character && !character->HasAuthority())
+				LocalShotgunFire(hitTargets);
+
+			ServerShotgunFire(hitTargets);
+		}
 	}
 }
 
 bool UCombatComponent::CanFire()
 {
-	return (equippedWeapon && !equippedWeapon->IsEmpty() && canFire && combatState == ECombatState::Unoccupied);
+	if (!equippedWeapon) return false;
+	if (isLocallyReloading) return false;
+	return (!equippedWeapon->IsEmpty() && canFire && combatState == ECombatState::Unoccupied );
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize hitTarget)
@@ -293,6 +375,13 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize hitTa
 
 void UCombatComponent::MultiCastFire_Implementation(const FVector_NetQuantize hitTarget)
 {
+	if (character && character->IsLocallyControlled() && !character->HasAuthority()) return;
+
+	LocalFire(hitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize hitTarget)
+{
 	if (character && equippedWeapon && combatState == ECombatState::Unoccupied)
 	{
 		character->PlayFireMontage(isAiming);
@@ -300,11 +389,33 @@ void UCombatComponent::MultiCastFire_Implementation(const FVector_NetQuantize hi
 	}
 }
 
+
+void UCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& hitTargets)
+{
+	MultiCastShotgunFire(hitTargets);
+}
+
+void UCombatComponent::MultiCastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& hitTargets)
+{
+	if (character && character->IsLocallyControlled() && !character->HasAuthority()) return;
+	LocalShotgunFire(hitTargets);
+}
+
+void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize> hitTargets)
+{
+	if (character && equippedWeapon && combatState == ECombatState::Unoccupied)
+	{
+		character->PlayFireMontage(isAiming);
+		AShotgun* shotgun = Cast<AShotgun>(equippedWeapon);
+		if(shotgun)
+			shotgun->FireShotgun(hitTargets);
+	}
+}
+
 void UCombatComponent::StartFireTimer()
 {
 	if (character && equippedWeapon)
 	{
-		canFire = false;
 		character->GetWorldTimerManager().SetTimer(fireTimer, this, &UCombatComponent::FireTimerFinished, equippedWeapon->fireDelay);
 	}
 }
@@ -344,6 +455,7 @@ void UCombatComponent::InitAmmos()
 	carriedAmmoMap.Emplace(EWeaponTypes::Sniper, startingSniperAmmo);
 	carriedAmmoMap.Emplace(EWeaponTypes::GrenadeLauncher, startingGrenadeLauncherAmmo);
 }
+
 
 
 void UCombatComponent::TraceCrosshair(FHitResult& result)

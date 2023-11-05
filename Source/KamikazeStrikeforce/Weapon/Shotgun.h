@@ -16,6 +16,9 @@ class KAMIKAZESTRIKEFORCE_API AShotgun : public AHitScanWeapon
 
 public:
 		virtual void Fire(const FVector hitLocation) override;
+		virtual void FireShotgun(const TArray<FVector_NetQuantize> hitLocations);
+
+		void ShotgunTraceEndScatter(const FVector& hitTarget, TArray<FVector_NetQuantize>& hitTargets);
 
 private:
 

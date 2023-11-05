@@ -12,6 +12,7 @@
 #include "KamikazeStrikeforce/GameState/MainGameState.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/Image.h"
 
 void AMainPlayerController::BeginPlay()
 {
@@ -36,6 +37,34 @@ void AMainPlayerController::Tick(float DeltaTime)
 	SetHUDTime();
 
 	CheckTimeSync(DeltaTime);
+
+	CheckPing(DeltaTime);
+}
+
+void AMainPlayerController::CheckPing(float DeltaTime)
+{
+	highPingRunningTime += DeltaTime;
+	if (highPingRunningTime > checkPingInterval)
+	{
+		if (!PlayerState) PlayerState = GetPlayerState<AMainPlayerState>();
+		if (PlayerState)
+		{
+			if (PlayerState->GetPingInMilliseconds() > highPingThreshold)
+			{
+				HighPingWarning();
+				highPingAnimRunningTime = 0.0f;
+			}
+		}
+		highPingRunningTime = 0.0f;
+	}
+	if (HUD && HUD->GetOverlay() && HUD->GetOverlay()->highPingAnim && HUD->GetOverlay()->IsAnimationPlaying(HUD->GetOverlay()->highPingAnim))
+	{
+		highPingAnimRunningTime += DeltaTime;
+		if (highPingAnimRunningTime > highPingDuration)
+		{
+			StopHighPingWarning();
+		}
+	}
 }
 
 void AMainPlayerController::CheckTimeSync(float DeltaTime)
@@ -341,5 +370,26 @@ void AMainPlayerController::ClientJoin_Implementation(FName _state, float _warmu
 	else if(!HUD)
 	{
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Failed to add GameInfoOverlay, No valid HUD")));
+	}
+}
+
+void AMainPlayerController::HighPingWarning()
+{
+	if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
+	if (HUD && HUD->GetOverlay() && HUD->GetOverlay()->highPingImg && HUD->GetOverlay()->highPingAnim)
+	{
+		HUD->GetOverlay()->highPingImg->SetOpacity(1.0f);
+		HUD->GetOverlay()->PlayAnimation(HUD->GetOverlay()->highPingAnim, 0.0f, 3);
+	}
+}
+
+void AMainPlayerController::StopHighPingWarning()
+{
+	if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
+	if (HUD && HUD->GetOverlay() && HUD->GetOverlay()->highPingImg && HUD->GetOverlay()->highPingAnim)
+	{
+		HUD->GetOverlay()->highPingImg->SetOpacity(1.0f);
+		if (HUD->GetOverlay()->IsAnimationPlaying(HUD->GetOverlay()->highPingAnim))
+			HUD->GetOverlay()->StopAnimation(HUD->GetOverlay()->highPingAnim);
 	}
 }

@@ -601,6 +601,11 @@ AMainHUD* AMainCharacter::GetMainHUD()
 	return mainHUD;
 }
 
+bool AMainCharacter::IsLocallyReloading() const
+{
+	return (combat && combat->isLocallyReloading);
+}
+
 AMainPlayerController* AMainCharacter::GetPlayerController()
 {
 	if(!playerController) playerController = Cast<AMainPlayerController>(Controller);

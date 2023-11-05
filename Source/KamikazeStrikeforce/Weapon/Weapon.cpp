@@ -10,6 +10,7 @@
 #include "Net/UnrealNetwork.h"
 #include "BulletShell.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -41,14 +42,11 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		areaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		areaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-		areaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
-		areaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
-	}
+		
+	areaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	areaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	areaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+	areaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);	
 
 	if (pickupWidget)
 	{
@@ -61,7 +59,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, weaponState);
-	DOREPLIFETIME(AWeapon, ammo);
 }
 
 void AWeapon::OnRep_Owner()
@@ -165,32 +162,6 @@ void AWeapon::OnRep_WeaponState()
 	}
 }
 
-void AWeapon::OnRep_Ammo()
-{
-	UpdateHUDAmmo();
-}
-
-void AWeapon::UpdateAmmo()
-{
-	ammo = FMath::Clamp(ammo - 1, 0, magCapacity);
-
-	UpdateHUDAmmo();
-}
-
-void AWeapon::UpdateHUDAmmo()
-{
-	if (!character)
-		character = Cast<AMainCharacter>(GetOwner());
-	if (character)
-	{
-		if (!playerController)
-			playerController = character->GetPlayerController();
-		if (playerController)
-		{
-			playerController->SetHUDAmmo(ammo);
-		}
-	}
-}
 
 bool AWeapon::IsEmpty()
 {
@@ -231,11 +202,59 @@ void AWeapon::Fire(const FVector hitLocation)
 	UpdateAmmo();
 }
 
+void AWeapon::UpdateAmmo()
+{
+	ammo = FMath::Clamp(ammo - 1, 0, magCapacity);
+	UpdateHUDAmmo();
+	if (HasAuthority())
+		ClientUpdateAmmo(ammo);
+	else
+		ammoSequence++;
+}
+
+void AWeapon::ClientUpdateAmmo_Implementation(int serverAmmo)
+{
+	if (HasAuthority()) return;
+	ammo = serverAmmo;
+	ammoSequence--;
+	ammo -= ammoSequence;
+	UpdateHUDAmmo();
+}
+
 
 void AWeapon::AddAmmo(int ammoAmt)
 {
 	ammo = FMath::Clamp(ammo + ammoAmt, 0, magCapacity);
 	UpdateHUDAmmo();
+	ClientAddAmmo(ammoAmt);
+}
+
+void AWeapon::ClientAddAmmo_Implementation(int ammoToAdd)
+{
+	if (HasAuthority()) return;
+	ammo = FMath::Clamp(ammo + ammoToAdd, 0, magCapacity);
+	UpdateHUDAmmo();
+}
+
+//void AWeapon::OnRep_Ammo()
+//{
+//	UpdateHUDAmmo();
+//  moved to ClientAddAmmo_Implementation()
+//}
+
+void AWeapon::UpdateHUDAmmo()
+{
+	if (!character)
+		character = Cast<AMainCharacter>(GetOwner());
+	if (character)
+	{
+		if (!playerController)
+			playerController = character->GetPlayerController();
+		if (playerController)
+		{
+			playerController->SetHUDAmmo(ammo);
+		}
+	}
 }
 
 void AWeapon::DropWeapon()
@@ -266,4 +285,20 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 }
 
 
+FVector AWeapon::TraceEndScatter(const FVector& hitTarget)
+{
+	auto spawnSocket = GetWeaponMesh()->GetSocketByName(spawnSocketName);
+	if (!spawnSocket) return FVector();
+
+	const FTransform socketTransform = spawnSocket->GetSocketTransform(GetWeaponMesh());
+	const FVector start = socketTransform.GetLocation();
+
+	const FVector ToTargetNormalized = (hitTarget - start).GetSafeNormal();
+	const FVector SphereCenter = start + ToTargetNormalized * distToSphere;
+	const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, sphereRadius);
+	const FVector EndLoc = SphereCenter + RandVec;
+	const FVector ToEndLoc = EndLoc - start;
+
+	return FVector(start + ToEndLoc * 100000 / ToEndLoc.Size());
+}
 

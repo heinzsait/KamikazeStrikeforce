@@ -90,6 +90,8 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		turnInPlace = character->GetTurnInPlace();
 
 		useFABRIK = (character->GetCombatState() != ECombatState::Reloading);
+		if (character->IsLocallyControlled() && character->GetCombatState() != ECombatState::ThrowingGrenade)
+			useFABRIK = !character->IsLocallyReloading();
 
 		useAimOffset = (character->GetCombatState() != ECombatState::Reloading && !character->disableGameplay);
 

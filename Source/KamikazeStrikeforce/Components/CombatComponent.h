@@ -26,8 +26,13 @@ public:
 	void FirePressed(bool isPressed);
 	void Reload();
 
-	UPROPERTY(Replicated)
-	bool isAiming;
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
+	bool isAiming = false;
+
+	UFUNCTION()
+	void OnRep_Aiming();
+
+	bool isAimPressed = false;
 
 	FORCEINLINE FVector GetHitLocation() { return hitLocation; }
 
@@ -45,12 +50,24 @@ protected:
 	void ServerSetAiming(bool _isAiming);
 
 	void Fire();
+	void FireHitScan();
+	void FireProjectile();
+	void FireShotgun();
+	void LocalFire(const FVector_NetQuantize hitTarget);
 
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize hitTarget);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiCastFire(const FVector_NetQuantize hitTarget);
+
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunFire(const TArray<FVector_NetQuantize>& hitTargets);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCastShotgunFire(const TArray<FVector_NetQuantize>& hitTargets);
+
+	void LocalShotgunFire(const TArray<FVector_NetQuantize> hitTargets);
 
 	void TraceCrosshair(FHitResult& result);
 
@@ -77,6 +94,7 @@ private:
 	float aimWalkSpeed;
 		
 	bool isFirePressed;
+	bool isLocallyReloading;
 
 	FHitResult hitResult;
 	FVector hitLocation;
