@@ -34,6 +34,7 @@ public:
 	virtual void ReceivedPlayer() override;
 
 	virtual float GetServerTime();
+	float singleTripTime = 0.0f;
 
 	float matchTime = 0.0f;
 	float warmupTime = 0.0f;

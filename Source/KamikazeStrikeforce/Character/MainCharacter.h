@@ -16,10 +16,12 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class UCombatComponent;
+class ULagCompensationComponent;
 class AMainPlayerController;
 class AMainPlayerState;
 class AMainHUD;
 class UAnimMontage;
+class UBoxComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -35,8 +37,11 @@ class AMainCharacter : public ACharacter, public ICrosshairHitInterface
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	ULagCompensationComponent* lagCompensationComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCombatComponent* combat;
 
 	/** MappingContext */
@@ -139,6 +144,55 @@ protected:
 
 	void PlayEliminationMontage();
 
+	//Hit Boxes....
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* thigh_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere, Category = "Hit Boxes")
+	UBoxComponent* foot_r;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -163,6 +217,8 @@ public:
 	FORCEINLINE float GetHealth() const { return health; }
 	FORCEINLINE float GetMaxHealth() const { return maxHealth; }
 
+	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return lagCompensationComponent; }
+
 	ECombatState GetCombatState() const;
 
 	FVector GetHitLocation();
@@ -177,6 +233,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UCombatComponent* GetCombat() const;
+
+	UPROPERTY()
+	TMap<FName, UBoxComponent*> hitCollisionBoxes;
 
 private:
 

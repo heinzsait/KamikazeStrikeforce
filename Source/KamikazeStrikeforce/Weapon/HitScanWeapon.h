@@ -20,9 +20,6 @@ public:
 protected:
 
 	UPROPERTY(EditAnywhere)
-	float damage = 20.0f;
-
-	UPROPERTY(EditAnywhere)
 	class UParticleSystem* impactFX;
 
 	UPROPERTY(EditAnywhere)

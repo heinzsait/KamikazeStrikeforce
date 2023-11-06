@@ -235,8 +235,8 @@ void AMainPlayerController::ServerRequestServerTime_Implementation(float timeOfC
 void AMainPlayerController::ClientReportServerTime_Implementation(float timeOfClientReq, float timeServerReceivedClientReq)
 {
 	float roundTripTime = GetWorld()->GetTimeSeconds() - timeOfClientReq;
-
-	float currentServerTime = timeServerReceivedClientReq + (roundTripTime * 0.5f);
+	singleTripTime = roundTripTime * 0.5f;
+	float currentServerTime = timeServerReceivedClientReq + singleTripTime;
 
 	serverClientDelta = currentServerTime - GetWorld()->GetTimeSeconds();
 }

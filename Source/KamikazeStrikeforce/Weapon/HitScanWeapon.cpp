@@ -4,6 +4,8 @@
 #include "HitScanWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "KamikazeStrikeforce/Character/MainCharacter.h"
+#include "KamikazeStrikeforce/PlayerController/MainPlayerController.h"
+#include "KamikazeStrikeforce/Components/LagCompensationComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -29,15 +31,27 @@ void AHitScanWeapon::Fire(const FVector hitLocation)
 			FVector beamEnd = end;
 			if (result.bBlockingHit)
 			{
-				if (HasAuthority())
+				AMainCharacter* hitCharacter = Cast<AMainCharacter>(result.GetActor());
+				APawn* instigator = Cast<APawn>(GetOwner());
+				if (hitCharacter && instigator && instigator->GetController())
 				{
-					AMainCharacter* _character = Cast<AMainCharacter>(result.GetActor());
-					APawn* instigator = Cast<APawn>(GetOwner());
-					if (_character && instigator && instigator->GetController())
+					if(HasAuthority() && !useServerSideRewind)
+						UGameplayStatics::ApplyDamage(hitCharacter, damage, instigator->GetController(), this, UDamageType::StaticClass());
+					
+					if (!HasAuthority() && useServerSideRewind)
 					{
-						UGameplayStatics::ApplyDamage(_character, damage, instigator->GetController(), this, UDamageType::StaticClass());
+						if (!character) character = Cast<AMainCharacter>(GetOwner());
+						if (character && character->Controller)
+						{
+							if (!playerController) playerController = Cast<AMainPlayerController>(character->Controller);
+							if (playerController && character->GetLagCompensation())
+							{
+								character->GetLagCompensation()->ServerScoreRequest(hitCharacter, start, result.ImpactPoint, (playerController->GetServerTime() - playerController->singleTripTime), this);
+							}
+						}
 					}
 				}
+				
 
 				if (impactFX)
 				{

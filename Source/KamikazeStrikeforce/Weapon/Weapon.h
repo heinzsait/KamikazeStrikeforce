@@ -52,7 +52,7 @@ public:
 	FORCEINLINE int GetAmmo() { return ammo; }
 	FORCEINLINE int GetMagCapacity() { return magCapacity; }
 	FORCEINLINE int GetRoomInMag() { return (magCapacity - ammo); }
-
+	FORCEINLINE float GetDamage() { return damage; }
 
 	UPROPERTY(EditAnywhere)
 	float fireDelay = 0.15f;
@@ -72,7 +72,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	EWeaponFireType fireType;
 
-	FVector TraceEndScatter(const FVector& hitTarget);
+	FVector TraceEndScatter(const FVector& hitTarget); 
 
 	UPROPERTY(EditAnywhere, Category = Scatter)
 	bool useScatter = false;
@@ -87,17 +87,24 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere)
+	float damage = 20.0f;
+
 	UPROPERTY(EditAnywhere, Category = Scatter)
 	float distToSphere = 800.0f;
 
 	UPROPERTY(EditAnywhere, Category = Scatter)
 	float sphereRadius = 75.0f;
 
-private:	
+	UPROPERTY(EditAnywhere, Category = ServerSideRewind)
+	bool useServerSideRewind = false;
 
 	class AMainPlayerController* playerController = nullptr;
 
 	class AMainCharacter* character = nullptr;
+
+private:	
+
 
 	UPROPERTY(EditAnywhere)
 	EWeaponTypes weaponType;
