@@ -62,6 +62,8 @@ enum class EAvatar : uint8
 	Quinn UMETA(DisplayName = "Quinn"),
 	Hazard UMETA(DisplayName = "Hazard"),
 	Grind UMETA(DisplayName = "Grind"),
+	Fusion UMETA(DisplayName = "Fusion"),
+	Slurp UMETA(DisplayName = "Slurp"),
 
 	MAX UMETA(DisplayName = "DefaultMAX")
 };

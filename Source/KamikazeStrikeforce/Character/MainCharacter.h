@@ -313,6 +313,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Avatar")
 	USkeletalMesh* grindMesh;
 
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* fusionMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* slurpMesh;
+
 	void HideCamIfCharClose();
 
 	UPROPERTY(EditAnywhere)

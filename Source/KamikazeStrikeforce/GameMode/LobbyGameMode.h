@@ -16,4 +16,8 @@ class KAMIKAZESTRIKEFORCE_API ALobbyGameMode : public AGameMode
 	
 public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Tick(float DeltaSeconds) override;
+
+private:
+	APlayerController* serverPlayerController;
 };

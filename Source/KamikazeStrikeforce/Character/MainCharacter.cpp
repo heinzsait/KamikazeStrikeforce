@@ -279,6 +279,16 @@ void AMainCharacter::InitAvatar(EAvatar avatar)
 			GetMesh()->SetSkeletalMesh(grindMesh);
 		break;
 
+	case EAvatar::Fusion:
+		if (grindMesh)
+			GetMesh()->SetSkeletalMesh(fusionMesh);
+		break;
+
+	case EAvatar::Slurp:
+		if (grindMesh)
+			GetMesh()->SetSkeletalMesh(slurpMesh);
+		break;
+
 	default:
 		break;
 	}
