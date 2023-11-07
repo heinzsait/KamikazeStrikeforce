@@ -19,6 +19,13 @@ AKamikazeStrikeforceGameMode::AKamikazeStrikeforceGameMode()
 	bDelayedStart = true;
 }
 
+void AKamikazeStrikeforceGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	
+}
+
 void AKamikazeStrikeforceGameMode::BeginPlay()
 {
 	Super::BeginPlay();

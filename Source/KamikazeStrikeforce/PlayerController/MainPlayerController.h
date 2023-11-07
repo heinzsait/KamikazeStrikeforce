@@ -43,6 +43,9 @@ public:
 
 	void OnMatchStateSet(FName state);
 
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
 	void HandleMatchStarted();
 	void HandleCooldown();
 
@@ -85,8 +88,6 @@ private:
 	UFUNCTION()
 	void OnRep_MatchState();
 
-	UFUNCTION(Server, Reliable)
-	void ServerCheckMatchState();
 
 	UFUNCTION(Client, Reliable)
 	void ClientJoin(FName _state, float _warmupTime, float _matchTime, float _startTtime, float _cooldownTime);
@@ -113,4 +114,5 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastInitAvatar(EAvatar _avatar);
 
+	bool infoNotSet = false;
 };

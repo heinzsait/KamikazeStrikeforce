@@ -17,7 +17,9 @@ class KAMIKAZESTRIKEFORCE_API AKamikazeStrikeforceGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
-	AKamikazeStrikeforceGameMode();
+	AKamikazeStrikeforceGameMode(); 
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	virtual void Tick(float DeltaTime) override;
 

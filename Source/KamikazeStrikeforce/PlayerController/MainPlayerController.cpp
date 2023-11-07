@@ -21,7 +21,8 @@ void AMainPlayerController::BeginPlay()
 
 	HUD = Cast<AMainHUD>(GetHUD());	
 	//if(HUD) HUD->AddGameInfoOverlay();
-	ServerCheckMatchState();	
+
+	ServerCheckMatchState();
 
 	if (IsLocalController())
 		LoadGameFromSave();
@@ -44,6 +45,42 @@ void AMainPlayerController::Tick(float DeltaTime)
 	CheckTimeSync(DeltaTime);
 
 	CheckPing(DeltaTime);
+
+	if (infoNotSet)
+	{
+		if (!HasAuthority())
+		{
+			if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
+			if (HUD && matchState == MatchState::WaitingToStart)
+			{
+				if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("adding GameInfoOverlay in Tick...")));
+				HUD->AddGameInfoOverlay();
+
+				infoNotSet = false;
+			}
+		}
+		else
+		{
+			AKamikazeStrikeforceGameMode* _gameMode = Cast<AKamikazeStrikeforceGameMode>(UGameplayStatics::GetGameMode(this));
+			if (_gameMode)
+			{
+				warmupTime = _gameMode->warmupTime;
+				matchTime = _gameMode->matchTime;
+				levelStartTime = _gameMode->levelStartTime;
+				matchState = _gameMode->GetMatchState();
+				cooldownTime = _gameMode->cooldownTime;
+
+				if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
+				if (HUD && matchState == MatchState::WaitingToStart)
+				{
+					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("adding GameInfoOverlay in Tick...")));
+					HUD->AddGameInfoOverlay();
+
+					infoNotSet = false;
+				}
+			}
+		}
+	}
 }
 
 void AMainPlayerController::CheckPing(float DeltaTime)
@@ -101,6 +138,8 @@ void AMainPlayerController::ReceivedPlayer()
 
 	if (IsLocalController())
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+
+
 }
 
 void AMainPlayerController::SetHUDHealth(float hp, float maxHP)
@@ -358,6 +397,8 @@ void AMainPlayerController::ServerCheckMatchState_Implementation()
 
 		ClientJoin(matchState, warmupTime, matchTime, levelStartTime, cooldownTime);
 	}
+	else
+		infoNotSet = true;
 }
 
 void AMainPlayerController::ClientJoin_Implementation(FName _state, float _warmupTime, float _matchTime, float _startTtime, float _cooldownTime)
@@ -369,14 +410,17 @@ void AMainPlayerController::ClientJoin_Implementation(FName _state, float _warmu
 	cooldownTime = _cooldownTime;
 	OnMatchStateSet(matchState);
 
-	if (!HUD) HUD = Cast<AMainHUD>(GetHUD());
+	HUD = Cast<AMainHUD>(GetHUD());
+
 	if (HUD && matchState == MatchState::WaitingToStart)
 	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("adding GameInfoOverlay...")));
 		HUD->AddGameInfoOverlay();
 	}
-	else if(!HUD)
+	else
 	{
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Failed to add GameInfoOverlay, No valid HUD")));
+		infoNotSet = true;
 	}
 }
 
@@ -422,18 +466,17 @@ void AMainPlayerController::LoadGameFromSave()
 	{
 		if (mainSaveGame)
 		{
-			//playerAvatar = mainSaveGame->playerAvatar;
-			playerAvatar = (EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1);
+			playerAvatar = mainSaveGame->playerAvatar;
+			//playerAvatar = (EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1);
 		}
 	}
 	else
 	{
 		if (mainSaveGame)
 		{
-			//playerAvatar = mainSaveGame->playerAvatar;
+			ServerInitAvatar(mainSaveGame->playerAvatar);
 
-			//ServerInitAvatar(mainSaveGame->playerAvatar);
-			ServerInitAvatar((EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1));
+			//ServerInitAvatar((EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1));
 		}
 	}
 }

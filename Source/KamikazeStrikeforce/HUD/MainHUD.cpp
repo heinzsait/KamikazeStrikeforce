@@ -61,6 +61,10 @@ void AMainHUD::AddOverlay()
 		characterOverlay = CreateWidget<UCharacterOverlay>(playerController, characterOverlayClass);
 		characterOverlay->AddToViewport();
 	}
+	else
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Failed to add CharacterOverlay, No valid playerController")));
+	}
 }
 
 UCharacterOverlay* AMainHUD::GetOverlay() const
@@ -75,6 +79,10 @@ void AMainHUD::AddGameInfoOverlay()
 	{
 		gameInfoOverlay = CreateWidget<UGameInfoOverlay>(playerController, gameInfoOverlayClass);
 		gameInfoOverlay->AddToViewport();
+	}
+	else
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Failed to add GameInfoOverlay, No valid playerController")));
 	}
 }
 
