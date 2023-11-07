@@ -72,35 +72,42 @@ void AKamikazeStrikeforceGameMode::Tick(float DeltaTime)
 
 void AKamikazeStrikeforceGameMode::PlayerEliminated(AMainCharacter* eliminatedCharacter, AMainPlayerController* victimController, AMainPlayerController* attackerController)
 {
-	if (eliminatedCharacter && victimController && attackerController)
+	if (victimController && attackerController && attackerController->PlayerState && victimController->PlayerState)
 	{
-		eliminatedCharacter->Eliminate();
-
 		AMainPlayerState* attackerState = Cast<AMainPlayerState>(attackerController->PlayerState);
 		AMainPlayerState* victimState = Cast<AMainPlayerState>(victimController->PlayerState);
 
 		AMainGameState* gameState = GetGameState<AMainGameState>();
 
-		if (attackerState && attackerState != victimState)
+		if (attackerState && victimState && attackerState != victimState)
 		{
 			attackerState->AddScore(1.0f);
-			victimState->AddDeaths(1);
 
 			if (gameState)
 			{
 				gameState->UpdateTopScore(attackerState);
 			}
 		}
+
+		if(victimState)
+			victimState->AddDeaths(1);
+
 	}
+
+	if(eliminatedCharacter)
+		eliminatedCharacter->Eliminate();
 }
 
 void AKamikazeStrikeforceGameMode::RequestRespawn(AMainCharacter* eliminatedCharacter, AMainPlayerController* eliminatedController)
 {
-	if (eliminatedCharacter && eliminatedController)
+	if (eliminatedCharacter)
 	{
 		eliminatedCharacter->Reset();
 		eliminatedCharacter->Destroy();
+	}
 
+	if(eliminatedController)
+	{
 		TArray<AActor*> playerStarts;
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), playerStarts);
 

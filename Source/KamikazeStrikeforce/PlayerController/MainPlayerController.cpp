@@ -10,6 +10,7 @@
 #include "KamikazeStrikeforce/GameMode/KamikazeStrikeforceGameMode.h"
 #include "KamikazeStrikeforce/PlayerState/MainPlayerState.h"
 #include "KamikazeStrikeforce/GameState/MainGameState.h"
+#include "KamikazeStrikeforce/Misc/MainSaveGame.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Image.h"
@@ -20,7 +21,10 @@ void AMainPlayerController::BeginPlay()
 
 	HUD = Cast<AMainHUD>(GetHUD());	
 	//if(HUD) HUD->AddGameInfoOverlay();
-	ServerCheckMatchState();
+	ServerCheckMatchState();	
+
+	if (IsLocalController())
+		LoadGameFromSave();
 }
 
 void AMainPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -28,6 +32,7 @@ void AMainPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMainPlayerController, matchState);
+	DOREPLIFETIME(AMainPlayerController, playerAvatar);
 }
 
 void AMainPlayerController::Tick(float DeltaTime)
@@ -85,7 +90,9 @@ void AMainPlayerController::OnPossess(APawn* InPawn)
 	if (playerCharacter)
 	{
 		SetHUDHealth(playerCharacter->GetHealth(), playerCharacter->GetMaxHealth());
+
 	}
+	
 }
 
 void AMainPlayerController::ReceivedPlayer()
@@ -391,5 +398,42 @@ void AMainPlayerController::StopHighPingWarning()
 		HUD->GetOverlay()->highPingImg->SetOpacity(1.0f);
 		if (HUD->GetOverlay()->IsAnimationPlaying(HUD->GetOverlay()->highPingAnim))
 			HUD->GetOverlay()->StopAnimation(HUD->GetOverlay()->highPingAnim);
+	}
+}
+
+
+void AMainPlayerController::ServerInitAvatar_Implementation(EAvatar _avatar)
+{
+	MulticastInitAvatar(_avatar);
+}
+
+void AMainPlayerController::MulticastInitAvatar_Implementation(EAvatar _avatar)
+{
+	playerAvatar = _avatar;
+}
+
+void AMainPlayerController::LoadGameFromSave()
+{
+	UMainSaveGame* mainSaveGame = Cast<UMainSaveGame>(UGameplayStatics::CreateSaveGameObject(UMainSaveGame::StaticClass()));
+	mainSaveGame = Cast<UMainSaveGame>(UGameplayStatics::LoadGameFromSlot("slot0", 0));
+
+
+	if (HasAuthority())
+	{
+		if (mainSaveGame)
+		{
+			//playerAvatar = mainSaveGame->playerAvatar;
+			playerAvatar = (EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1);
+		}
+	}
+	else
+	{
+		if (mainSaveGame)
+		{
+			//playerAvatar = mainSaveGame->playerAvatar;
+
+			//ServerInitAvatar(mainSaveGame->playerAvatar);
+			ServerInitAvatar((EAvatar)FMath::RandRange((int)EAvatar::Manny, (int)EAvatar::MAX - 1));
+		}
 	}
 }

@@ -33,6 +33,7 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AMainCharacter::AMainCharacter()
 {
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -170,6 +171,24 @@ AMainCharacter::AMainCharacter()
 }
 
 
+void AMainCharacter::PollInitAvatar()
+{	
+	if (currentAvatar != EAvatar::None) return;
+	if(HasAuthority())
+	{
+		AMainPlayerController* cont = Cast<AMainPlayerController>(GetController());
+		if (cont)
+		{
+			currentAvatar = cont->playerAvatar;
+			InitAvatar(currentAvatar);
+		}
+	}
+}
+
+void AMainCharacter::OnRep_Avatar()
+{
+	InitAvatar(currentAvatar);
+}
 
 void AMainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -178,13 +197,14 @@ void AMainCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME_CONDITION(AMainCharacter, overlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AMainCharacter, health);
 	DOREPLIFETIME(AMainCharacter, disableGameplay);
+	DOREPLIFETIME(AMainCharacter, currentAvatar);
 }
 
 void AMainCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
+	
 	playerController = Cast<AMainPlayerController>(Controller);
 
 	//Add Input Mapping Context
@@ -205,6 +225,7 @@ void AMainCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &AMainCharacter::ReceiveDamage);
 	}
+			
 }
 
 void AMainCharacter::PostInitializeComponents()
@@ -224,14 +245,46 @@ void AMainCharacter::PostInitializeComponents()
 
 void AMainCharacter::PollInitializePlayerState()
 {
-	if (!basePlayerState) basePlayerState = Cast<AMainPlayerState>(GetPlayerState());
-	if (basePlayerState && !playerStateSet)
+	if (!mainPlayerState) mainPlayerState = Cast<AMainPlayerState>(GetPlayerState());
+	if (mainPlayerState && !playerStateSet)
 	{
-		basePlayerState->AddScore(0.0f);
-		basePlayerState->AddDeaths(0);
+		mainPlayerState->AddScore(0.0f);
+		mainPlayerState->AddDeaths(0);
 		playerStateSet = true;
 	}
 }
+
+
+void AMainCharacter::InitAvatar(EAvatar avatar)
+{
+	switch (avatar)
+	{
+	case EAvatar::Manny:
+		if (mannyMesh)
+			GetMesh()->SetSkeletalMesh(mannyMesh);
+		break;
+
+	case EAvatar::Quinn:
+		if (quinnMesh)
+			GetMesh()->SetSkeletalMesh(quinnMesh);
+		break;
+
+	case EAvatar::Hazard:
+		if (hazardMesh)
+			GetMesh()->SetSkeletalMesh(hazardMesh);
+		break;
+
+	case EAvatar::Grind:
+		if (grindMesh)
+			GetMesh()->SetSkeletalMesh(grindMesh);
+		break;
+
+	default:
+		break;
+	}
+}
+
+
 
 void AMainCharacter::Tick(float DeltaTime)
 {
@@ -265,6 +318,13 @@ void AMainCharacter::Tick(float DeltaTime)
 		HideCamIfCharClose();
 
 	PollInitializePlayerState();
+	PollInitAvatar();
+
+	/*if (HasAuthority())
+	{
+		FString str = FString::Printf(TEXT("%d: avatar: %d"), (int)GPlayInEditorID, (int)currentAvatar);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Green, str);
+	}*/
 }
 
 

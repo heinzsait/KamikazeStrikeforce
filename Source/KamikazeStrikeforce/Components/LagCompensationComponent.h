@@ -88,3 +88,11 @@ private:
 	void ResetHitBoxes(AMainCharacter* HitCharacter, const FFramePackage& Package);
 	void EnableCharacterMeshCollision(AMainCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 };
+
+/*
+Copy these lines to DefaultEngine.ini to simulate lag
+
+[PacketSimulationSettings]
+pktLag = 500
+
+*/

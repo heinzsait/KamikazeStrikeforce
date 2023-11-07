@@ -8,6 +8,7 @@
 #include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "KamikazeStrikeforce/Interfaces/CrosshairHitInterface.h"
 #include "Components/TimelineComponent.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "MainCharacter.generated.h"
 
 class USpringArmComponent;
@@ -194,6 +195,9 @@ protected:
 	UBoxComponent* foot_r;
 
 public:
+
+	
+
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
@@ -237,11 +241,16 @@ public:
 	UPROPERTY()
 	TMap<FName, UBoxComponent*> hitCollisionBoxes;
 
+	void InitAvatar(EAvatar avatar);
+
+	UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_Avatar, Category = "Avatar")
+	EAvatar currentAvatar = EAvatar::None;
+
 private:
 
 	AMainPlayerController* playerController = nullptr;
 
-	AMainPlayerState* basePlayerState = nullptr;
+	AMainPlayerState* mainPlayerState = nullptr;
 
 	AMainHUD* mainHUD = nullptr;
 
@@ -292,6 +301,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* eliminationMontage;
 
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* mannyMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* quinnMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* hazardMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Avatar")
+	USkeletalMesh* grindMesh;
+
 	void HideCamIfCharClose();
 
 	UPROPERTY(EditAnywhere)
@@ -301,7 +322,7 @@ private:
 	void EliminationFinished();
 
 	UPROPERTY(EditDefaultsOnly)
-	float eliminiationDelay = 3.0f;
+	float eliminiationDelay = 5.0f;
 
 	//Dissolve Effect...
 
@@ -326,6 +347,11 @@ private:
 	// Material instance set on the Blueprint, used with the dynamic material instance
 	UPROPERTY(EditAnywhere)
 	TArray<UMaterialInstance*> dissolveMaterialInstances;
+
+	void PollInitAvatar();
+
+	UFUNCTION()
+	void OnRep_Avatar();
 
 public:
 	

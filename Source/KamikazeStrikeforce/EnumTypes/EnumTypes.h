@@ -53,3 +53,15 @@ enum class ETurnInPlace : uint8
 
 	MAX UMETA(DisplayName = "DefaultMAX")
 };
+
+UENUM(BlueprintType)
+enum class EAvatar : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Manny UMETA(DisplayName = "Manny"),
+	Quinn UMETA(DisplayName = "Quinn"),
+	Hazard UMETA(DisplayName = "Hazard"),
+	Grind UMETA(DisplayName = "Grind"),
+
+	MAX UMETA(DisplayName = "DefaultMAX")
+};

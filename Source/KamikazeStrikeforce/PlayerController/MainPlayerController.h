@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "KamikazeStrikeforce/EnumTypes/EnumTypes.h"
 #include "MainPlayerController.generated.h"
 
 /**
@@ -30,7 +31,6 @@ public:
 	void SetHUDMatchInfoTimer(float timer);
 	void SetHUDTime();
 
-	virtual void OnPossess(APawn* InPawn) override;
 	virtual void ReceivedPlayer() override;
 
 	virtual float GetServerTime();
@@ -46,7 +46,13 @@ public:
 	void HandleMatchStarted();
 	void HandleCooldown();
 
+	UPROPERTY(BlueprintReadWrite, Replicated, Category = "Avatar")
+	EAvatar playerAvatar = EAvatar::None;
+
 protected:
+
+	virtual void OnPossess(APawn* aPawn) override;
+
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float timeOfClientReq);
 
@@ -98,4 +104,13 @@ private:
 	float highPingThreshold = 50.0f;
 
 	float highPingAnimRunningTime = 0;
+
+	void LoadGameFromSave();
+
+	UFUNCTION(Server, Reliable)
+	void ServerInitAvatar(EAvatar _avatar);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastInitAvatar(EAvatar _avatar);
+
 };

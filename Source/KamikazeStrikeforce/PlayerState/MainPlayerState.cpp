@@ -7,7 +7,6 @@
 #include "Net/UnrealNetwork.h"
 
 
-
 void AMainPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -31,14 +30,10 @@ void AMainPlayerState::OnRep_Score()
 
 void AMainPlayerState::SetScoreHUD()
 {
-	if (!character) character = Cast<AMainCharacter>(GetPawn());
-	if (character)
+	playerController = playerController == nullptr ? Cast<AMainPlayerController>(GetPlayerController()) : playerController;
+	if (playerController)
 	{
-		if (!playerController && character->GetController()) playerController = Cast<AMainPlayerController>(character->GetController());
-		if (playerController)
-		{
-			playerController->SetHUDScore(GetScore());
-		}
+		playerController->SetHUDScore(GetScore());
 	}
 }
 
@@ -56,13 +51,9 @@ void AMainPlayerState::OnRep_Deaths()
 
 void AMainPlayerState::SetDeathsHUD()
 {
-	if (!character) character = Cast<AMainCharacter>(GetPawn());
-	if (character)
+	playerController = playerController == nullptr ? Cast<AMainPlayerController>(GetPlayerController()) : playerController;
+	if (playerController)
 	{
-		if (!playerController) playerController = Cast<AMainPlayerController>(character->GetController());
-		if (playerController)
-		{
-			playerController->SetHUDDeaths(deaths);
-		}
+		playerController->SetHUDDeaths(deaths);
 	}
 }

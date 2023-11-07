@@ -14,6 +14,7 @@ class KAMIKAZESTRIKEFORCE_API AMainPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 public:
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AddScore(float score);
 	virtual void OnRep_Score() override;
@@ -23,8 +24,6 @@ public:
 private:
 
 	class AMainPlayerController* playerController = nullptr;
-
-	class AMainCharacter* character = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Deaths)
 	int deaths = 0;
